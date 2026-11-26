@@ -1,0 +1,207 @@
+{
+  "corpus": "Synthetic context and template coverage; no claim of independent real-world validation.",
+  "node": "v26.0.0",
+  "platform": "darwin",
+  "mode": "balanced",
+  "passed": true,
+  "results": {
+    "prompts": 500,
+    "families": 20,
+    "benign": 250,
+    "structuredRecall": 1,
+    "strongSecretRecall": 1,
+    "maskPrecision": 1,
+    "benignModification": 0,
+    "benignBlock": 0,
+    "reviewRate": 0,
+    "syntheticMarkerLeaks": 0,
+    "p50Ms": 0.005,
+    "p95Ms": 0.017,
+    "entities": {
+      "customer_id": {
+        "expected": 25,
+        "matched": 25,
+        "predicted": 25
+      },
+      "account_id": {
+        "expected": 25,
+        "matched": 25,
+        "predicted": 25
+      },
+      "email": {
+        "expected": 25,
+        "matched": 25,
+        "predicted": 25
+      },
+      "pan": {
+        "expected": 25,
+        "matched": 25,
+        "predicted": 25
+      },
+      "aadhaar": {
+        "expected": 25,
+        "matched": 25,
+        "predicted": 25
+      },
+      "phone": {
+        "expected": 25,
+        "matched": 25,
+        "predicted": 25
+      },
+      "card": {
+        "expected": 25,
+        "matched": 25,
+        "predicted": 25
+      },
+      "upi": {
+        "expected": 25,
+        "matched": 25,
+        "predicted": 25
+      },
+      "credential": {
+        "expected": 25,
+        "matched": 25,
+        "predicted": 25
+      },
+      "private_key": {
+        "expected": 25,
+        "matched": 25,
+        "predicted": 25
+      }
+    }
+  },
+  "languages": {
+    "en": {
+      "prompts": 460,
+      "families": 20,
+      "benign": 230,
+      "structuredRecall": 1,
+      "strongSecretRecall": 1,
+      "maskPrecision": 1,
+      "benignModification": 0,
+      "benignBlock": 0,
+      "reviewRate": 0,
+      "syntheticMarkerLeaks": 0,
+      "p50Ms": 0.004,
+      "p95Ms": 0.007,
+      "entities": {
+        "customer_id": {
+          "expected": 23,
+          "matched": 23,
+          "predicted": 23
+        },
+        "account_id": {
+          "expected": 23,
+          "matched": 23,
+          "predicted": 23
+        },
+        "email": {
+          "expected": 23,
+          "matched": 23,
+          "predicted": 23
+        },
+        "pan": {
+          "expected": 23,
+          "matched": 23,
+          "predicted": 23
+        },
+        "aadhaar": {
+          "expected": 23,
+          "matched": 23,
+          "predicted": 23
+        },
+        "phone": {
+          "expected": 23,
+          "matched": 23,
+          "predicted": 23
+        },
+        "card": {
+          "expected": 23,
+          "matched": 23,
+          "predicted": 23
+        },
+        "upi": {
+          "expected": 23,
+          "matched": 23,
+          "predicted": 23
+        },
+        "credential": {
+          "expected": 23,
+          "matched": 23,
+          "predicted": 23
+        },
+        "private_key": {
+          "expected": 23,
+          "matched": 23,
+          "predicted": 23
+        }
+      }
+    },
+    "mixed": {
+      "prompts": 40,
+      "families": 20,
+      "benign": 20,
+      "structuredRecall": 1,
+      "strongSecretRecall": 1,
+      "maskPrecision": 1,
+      "benignModification": 0,
+      "benignBlock": 0,
+      "reviewRate": 0,
+      "syntheticMarkerLeaks": 0,
+      "p50Ms": 0.004,
+      "p95Ms": 0.015,
+      "entities": {
+        "customer_id": {
+          "expected": 2,
+          "matched": 2,
+          "predicted": 2
+        },
+        "account_id": {
+          "expected": 2,
+          "matched": 2,
+          "predicted": 2
+        },
+        "email": {
+          "expected": 2,
+          "matched": 2,
+          "predicted": 2
+        },
+        "pan": {
+          "expected": 2,
+          "matched": 2,
+          "predicted": 2
+        },
+        "aadhaar": {
+          "expected": 2,
+          "matched": 2,
+          "predicted": 2
+        },
+        "phone": {
+          "expected": 2,
+          "matched": 2,
+          "predicted": 2
+        },
+        "card": {
+          "expected": 2,
+          "matched": 2,
+          "predicted": 2
+        },
+        "upi": {
+          "expected": 2,
+          "matched": 2,
+          "predicted": 2
+        },
+        "credential": {
+          "expected": 2,
+          "matched": 2,
+          "predicted": 2
+        },
+        "private_key": {
+          "expected": 2,
+          "matched": 2,
+          "predicted": 2
+        }
+      }
+    }
+  }
+}

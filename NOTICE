@@ -1,0 +1,6 @@
+PromptVeil
+
+Original project code is licensed under the Apache License, Version 2.0.
+Protocol integrations follow the publicly documented Claude Code hooks, Codex
+hooks, OpenAI Responses API, and browser extension and web platform interfaces.
+See docs/architecture.md for references.

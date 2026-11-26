@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PromptVeil · Guard diagnostics</title>
+  <link rel="stylesheet" href="./assets/style.css">
+  <link rel="stylesheet" href="./assets/diagnostics.css">
+  <script type="module" src="./apps/extension/diagnostics-page.js"></script>
+</head>
+<body>
+  <main class="diagnostics">
+    <header>
+      <p class="brand">PromptVeil</p>
+      <h1>Guard diagnostics</h1>
+      <p>Keep your chat open in the other tab. Refresh this report after testing.</p>
+    </header>
+    <div class="actions">
+      <button type="button" id="refresh-report">Refresh report</button>
+      <button type="button" id="copy-report" class="secondary" disabled>Copy report</button>
+    </div>
+    <p id="report-status" role="status">Reading chat guard…</p>
+    <section id="activity" aria-label="Guard activity" hidden>
+      <dl id="guard-summary"></dl>
+      <table>
+        <caption>Guard activity since the chat page loaded</caption>
+        <thead><tr><th scope="col">Action</th><th scope="col">Seen</th><th scope="col">Matched editor</th><th scope="col">Canceled</th></tr></thead>
+        <tbody id="guard-events"></tbody>
+      </table>
+    </section>
+    <details>
+      <summary>Raw report</summary>
+      <pre id="guard-report"></pre>
+    </details>
+  </main>
+</body>
+</html>

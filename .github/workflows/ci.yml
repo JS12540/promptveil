@@ -1,0 +1,196 @@
+name: Verify
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - run: corepack pnpm install --frozen-lockfile
+      - run: corepack pnpm run typecheck
+      - name: Check relative documentation links
+        run: |
+          node --input-type=module <<'JS'
+          import { execFileSync } from 'node:child_process';
+          import { existsSync, readFileSync } from 'node:fs';
+          import { dirname, resolve } from 'node:path';
+
+          const files = execFileSync('git', ['ls-files', '-z', '*.md'], { encoding: 'utf8' }).split('\0').filter(Boolean);
+          const inlineLink = /!?\[[^\]\n]*\]\((?:<([^>\n]+)>|([^()\s]+))(?:\s+"[^"\n]*")?\)/g;
+          for (const file of files) {
+            let fence;
+            for (const [index, line] of readFileSync(file, 'utf8').split('\n').entries()) {
+              const marker = line.match(/^\s*([`~])\1\1/)?.[1];
+              if (marker) {
+                if (!fence || fence === marker) fence = fence ? undefined : marker;
+                continue;
+              }
+              if (fence) continue;
+              for (const [, angleLink, normalLink] of line.matchAll(inlineLink)) {
+                const target = angleLink ?? normalLink;
+                if (/^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i.test(target)) continue;
+                const path = decodeURIComponent(target.split(/[?#]/, 1)[0]);
+                if (!existsSync(resolve(dirname(file), path))) {
+                  console.error(`${file}:${index + 1}: missing link target ${target}`);
+                  process.exitCode = 1;
+                }
+              }
+            }
+          }
+          JS
+      - name: Check changed lines for whitespace errors
+        env:
+          PULL_REQUEST_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [[ -n "$PULL_REQUEST_BASE" ]]; then
+            git diff --check "$PULL_REQUEST_BASE" HEAD
+          else
+            git show --format= --check HEAD
+          fi
+      - name: Validate workflows
+        run: |
+          export GOBIN="$RUNNER_TEMP/workflow-tools"
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          "$GOBIN/actionlint"
+
+  unit-and-cli:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - run: node --experimental-strip-types --test tests/core.test.ts tests/cli.test.ts
+
+  agent-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - run: npm test
+      - name: Install pinned Codex CLI for synthetic relay smoke
+        run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock --prefix "$RUNNER_TEMP/promptveil-codex" @openai/codex@0.172.0
+      - name: Verify the native Codex hook and credential-free relay
+        run: |
+          export CODEX_BIN="$RUNNER_TEMP/promptveil-codex/node_modules/.bin/codex"
+          node tests/e2e/native.mjs codex
+          node --experimental-strip-types tests/e2e/codex.mjs
+
+  browser-e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - run: npm run build
+      - name: Install pinned Chromium tooling
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock --prefix "$RUNNER_TEMP/promptveil-browser" playwright@1.60.0
+          node "$RUNNER_TEMP/promptveil-browser/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Test the packaged extension and PWA
+        run: |
+          export BROWSER_MODULE="$RUNNER_TEMP/promptveil-browser/node_modules/playwright/index.mjs"
+          xvfb-run --auto-servernum node tests/e2e/browser.mjs
+
+  eval-and-package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - run: npm run build
+      - run: npm run release:check
+      - name: Evaluate and save the report
+        run: |
+          set -o pipefail
+          npm run --silent eval | tee dist/evaluation.json
+      - name: Install and run the packaged CLI
+        run: |
+          npm install --offline --ignore-scripts --no-audit --no-fund --prefix "$RUNNER_TEMP/promptveil-smoke" dist/cli/*.tgz
+          printf '%s' 'Invest ₹25,000.' | "$RUNNER_TEMP/promptveil-smoke/node_modules/.bin/promptveil" protect > "$RUNNER_TEMP/actual.txt"
+          printf '%s' 'Invest ₹25,000.' | cmp - "$RUNNER_TEMP/actual.txt"
+      - name: Save verification artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: verification-artifacts
+          if-no-files-found: error
+          retention-days: 14
+          overwrite: true
+          path: |
+            dist/extension.zip
+            dist/site.zip
+            dist/cli/*.tgz
+            dist/SHA256SUMS
+            dist/evaluation.json
+
+  security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Test privacy and security boundaries
+        run: npm run test:security
+      - name: Scan Git history for secrets
+        run: |
+          export GOBIN="$RUNNER_TEMP/security-tools"
+          go install github.com/zricethezav/gitleaks/v8@v8.24.2
+          "$GOBIN/gitleaks" git --redact=100 --no-banner .
+      - name: Review dependency changes
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@05fe4576374b728f0c523d6a13d64c25081e0803 # v4.8.3
+      - name: Audit the full dependency lockfile
+        run: |
+          scanner="$RUNNER_TEMP/security-tools/osv-scanner"
+          curl --fail --silent --show-error --location --retry 3 \
+            https://github.com/google/osv-scanner/releases/download/v2.7.1/osv-scanner_linux_amd64 \
+            --output "$scanner"
+          printf '%s  %s\n' 'fb7dab19a8bd9bbe5c3189f09d4b7ee1820c9553a23bac202648a56efd2f6ee8' "$scanner" | sha256sum --check --strict
+          chmod +x "$scanner"
+          "$scanner" scan source --lockfile=pnpm-lock.yaml

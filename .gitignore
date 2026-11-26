@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.tgz
+*.log
+.env*
+!.env.example
+.DS_Store
+coverage/
+playwright-report/
+test-results/
+private/
+auth.json

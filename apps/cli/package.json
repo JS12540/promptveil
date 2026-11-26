@@ -1,0 +1,13 @@
+{
+  "name": "@promptveil/cli-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@promptveil/claude-code-adapter": "workspace:*",
+    "@promptveil/codex-adapter": "workspace:*",
+    "@promptveil/core": "workspace:*",
+    "@promptveil/cursor-adapter": "workspace:*",
+    "@promptveil/gateway": "workspace:*"
+  }
+}

@@ -1,0 +1,165 @@
+name: Publish tagged release
+
+on:
+  workflow_dispatch:
+    inputs:
+      manual_checks_complete:
+        description: Physical-device, provider-site, native-hook, and live Codex checks are documented and passing.
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: promptveil-release
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify release tag
+        env:
+          MANUAL_CHECKS_COMPLETE: ${{ inputs.manual_checks_complete }}
+        run: |
+          if [[ "$MANUAL_CHECKS_COMPLETE" != true ]]; then
+            echo 'Complete and document the manual checks in evidence/submission-checklist.md before publishing.'
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_TYPE" != tag || ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'Dispatch this workflow against a version tag such as v0.1.0.'
+            exit 1
+          fi
+          git merge-base --is-ancestor HEAD origin/main
+          node -e 'if (process.env.GITHUB_REF_NAME !== "v" + require("./package.json").version) process.exit(1)'
+
+  verify:
+    needs: tag
+    uses: ./.github/workflows/ci.yml
+
+  package:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
+    outputs:
+      pages-artifact: ${{ steps.pages-artifact.outputs.name }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - run: npm run build
+      - run: npm run release:check
+      - name: Stage release assets
+        run: |
+          mkdir release-assets
+          cp dist/extension.zip dist/site.zip dist/cli/*.tgz dist/SHA256SUMS docs/compatibility.md LICENSE NOTICE release-assets/
+          npm run --silent eval > release-assets/evaluation.json
+          (cd release-assets && sha256sum --check --strict SHA256SUMS)
+      - name: Attest release archives
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: |
+            release-assets/*.zip
+            release-assets/*.tgz
+      - name: Upload release assets
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-assets
+          path: release-assets/
+          retention-days: 30
+          if-no-files-found: error
+          overwrite: true
+      - name: Distinguish the Pages artifact for each build attempt
+        id: pages-artifact
+        run: printf 'name=github-pages-%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+      - name: Upload the matching Pages root
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+        with:
+          name: ${{ steps.pages-artifact.outputs.name }}
+          path: dist/web
+          retention-days: 30
+
+  publish:
+    needs: package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: release
+    permissions:
+      contents: write
+      attestations: read
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-assets
+          path: release-assets
+      - name: Verify transferred archive checksums
+        working-directory: release-assets
+        run: sha256sum --check --strict SHA256SUMS
+      - name: Verify release provenance
+        working-directory: release-assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for archive in extension.zip site.zip promptveil-*.tgz; do
+            gh attestation verify "$archive" --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+              --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA"
+          done
+      - name: Publish the verified tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if state=$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease --jq '.isDraft or .isPrerelease'); then
+            if [[ "$state" != false ]]; then
+              echo 'The tag already has a draft or prerelease. Review it before rerunning.'
+              exit 1
+            fi
+            published=$(mktemp -d)
+            gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --pattern '*' --dir "$published"
+            if ! cmp --silent release-assets/SHA256SUMS "$published/SHA256SUMS"; then
+              echo 'Published checksums differ from this build. Keep the existing release and investigate.'
+              exit 1
+            fi
+            (cd "$published" && sha256sum --check --strict SHA256SUMS)
+            echo 'Already published with matching archives.'
+            exit 0
+          fi
+          project_name="${GITHUB_REPOSITORY#*/}"
+          site_root="https://${GITHUB_REPOSITORY_OWNER}.github.io/${project_name}"
+          if [[ "${project_name,,}" == "${GITHUB_REPOSITORY_OWNER,,}.github.io" ]]; then
+            site_root="https://${GITHUB_REPOSITORY_OWNER}.github.io"
+          fi
+          release_notes="$RUNNER_TEMP/release-notes.md"
+          printf '%s\n\n' "[Website and synthetic demo](${site_root}/) · [Installable web app](${site_root}/app/) · [Codex Evidence Pack](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/evidence/README.md)" > "$release_notes"
+          gh release create "$GITHUB_REF_NAME" release-assets/* --repo "$GITHUB_REPOSITORY" --verify-tag --notes-file "$release_notes" --generate-notes
+
+  pages:
+    needs: [package, publish]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+        with:
+          artifact_name: ${{ needs.package.outputs.pages-artifact }}

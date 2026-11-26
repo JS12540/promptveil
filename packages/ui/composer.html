@@ -1,0 +1,16 @@
+<main class="composer">
+  <header><p class="brand">PromptVeil</p><h1>Private composer</h1><p>Scan locally, then copy or transfer the protected text.</p><p id="offline" hidden></p></header>
+  <label for="input">Prompt</label>
+  <textarea id="input" rows="6" spellcheck="false" autocomplete="off"></textarea>
+  <label class="check"><input id="strict" type="checkbox"> Strict mode</label>
+  <div class="actions"><button id="scan">Scan prompt</button><button class="secondary" id="clear">Clear session</button></div>
+  <p id="status" role="status"></p>
+  <section id="review" aria-label="Findings to review"></section>
+  <label for="output">Protected text</label>
+  <textarea id="output" rows="5" readonly></textarea>
+  <div class="actions"><button id="copy" disabled>Copy protected text</button><button id="insert" disabled hidden>Insert into tab</button></div>
+  <details><summary>Restore a response locally</summary>
+    <label for="restore">AI response</label><textarea id="restore" rows="4" spellcheck="false" autocomplete="off"></textarea>
+    <button id="restore-button" class="secondary">Restore placeholders</button>
+  </details>
+</main>

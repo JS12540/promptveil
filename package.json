@@ -1,0 +1,24 @@
+{
+  "name": "promptveil",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "dev": "npm run build:web && node scripts/serve-web.mjs",
+    "build:web": "node scripts/build.mjs --web-only",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:security": "node --experimental-strip-types --test tests/core.test.ts tests/gateway.test.ts tests/paste.test.ts tests/send.test.ts tests/scan-pause.test.ts tests/worker.test.ts",
+    "build": "node scripts/build.mjs",
+    "eval": "node --experimental-strip-types eval/evaluate.ts",
+    "release:check": "node scripts/check-release.mjs",
+    "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "typescript": "5.9.3"
+  }
+}

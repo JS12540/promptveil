@@ -1,0 +1,9 @@
+{
+  "name": "@promptveil/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@promptveil/ui": "workspace:*"
+  }
+}

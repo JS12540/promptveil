@@ -1,0 +1,10 @@
+.diagnostics { width: min(100%, 61rem); margin: auto; padding: clamp(1rem, 5vw, 3.5rem); }
+.diagnostics h1 { font-size: clamp(2rem, 5vw, 3.25rem); }
+.diagnostics dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .75rem; margin: 1.25rem 0; }
+.diagnostics dl div { background: #132238; border: 1px solid #334a61; border-radius: .6rem; padding: .75rem 1rem; }
+.diagnostics dt { color: #b3c7da; font-size: .9rem; }
+.diagnostics dd { margin: .25rem 0 0; font-weight: 650; }
+.diagnostics table { width: 100%; border-collapse: collapse; }
+.diagnostics caption { text-align: left; padding-bottom: .6rem; color: #b3c7da; }
+.diagnostics th, .diagnostics td { text-align: left; border-bottom: 1px solid #334a61; padding: .55rem; }
+.diagnostics pre { padding: 1rem; background: #132238; border-radius: .6rem; white-space: pre-wrap; overflow-wrap: anywhere; }

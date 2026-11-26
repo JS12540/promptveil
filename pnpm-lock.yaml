@@ -1,0 +1,95 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+  .:
+    devDependencies:
+      '@types/node':
+        specifier: 22.10.5
+        version: 22.10.5
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  adapters/claude-code: {}
+
+  adapters/codex: {}
+
+  adapters/cursor: {}
+
+  apps/cli:
+    dependencies:
+      '@promptveil/claude-code-adapter':
+        specifier: workspace:*
+        version: link:../../adapters/claude-code
+      '@promptveil/codex-adapter':
+        specifier: workspace:*
+        version: link:../../adapters/codex
+      '@promptveil/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@promptveil/cursor-adapter':
+        specifier: workspace:*
+        version: link:../../adapters/cursor
+      '@promptveil/gateway':
+        specifier: workspace:*
+        version: link:../gateway
+
+  apps/extension:
+    dependencies:
+      '@promptveil/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+
+  apps/gateway:
+    dependencies:
+      '@promptveil/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+
+  apps/web:
+    dependencies:
+      '@promptveil/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+
+  packages/contracts: {}
+
+  packages/core:
+    dependencies:
+      '@promptveil/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
+  packages/ui:
+    dependencies:
+      '@promptveil/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@promptveil/core':
+        specifier: workspace:*
+        version: link:../core
+
+packages:
+  '@types/node@22.10.5':
+    resolution: {integrity: sha512-F8Q+SeGimwOo86fiovQh8qiXfFEh2/ocYv7tU5pJ3EXMSSxk1Joj5wefpFK2fHTf/N6HKGSxIDBT9f3gCxXPkQ==}
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  undici-types@6.20.0:
+    resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
+
+snapshots:
+  '@types/node@22.10.5':
+    dependencies:
+      undici-types: 6.20.0
+
+  typescript@5.9.3: {}
+
+  undici-types@6.20.0: {}

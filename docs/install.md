@@ -22,14 +22,14 @@ With npm, use `npm run build`. See the [testing guide](testing.md) for verificat
 1. Extract the release's `extension.zip` or use the local `dist/extension/` directory.
 2. Open `chrome://extensions` in Chrome or `edge://extensions` in Edge. Turn on developer mode and select **Load unpacked**, then choose the directory containing `manifest.json`.
 3. Refresh your AI chat tab, then click **Write with PromptVeil**. See the [compatibility matrix](compatibility.md) for the listed launchers. You can also click the PromptVeil toolbar icon.
-4. Type `Customer ID: 12345678. Invest ₹25,000.` in the PromptVeil composer. Click **Protect and insert**. The protected text should appear in the chat editor as a draft. Review it before sending.
+4. Type `Draft a friendly reply to a customer whose package arrived damaged. Customer ID: 48372651. Email: maya.patel@example.com. Offer a replacement or a $48 refund.` in the PromptVeil composer. Click **Protect and insert**. The protected text should appear in the chat editor as a draft. Review it before sending.
 5. Try `Password: never-valid-fixture` and confirm PromptVeil blocks it.
 
 If a transfer is declined, check that the chat tab is still active and its editor is empty. Reopen the panel after navigating to another chat. On other HTTPS sites, focus an empty message field, open the toolbar popup, and select **Protect and insert**. If the editor declines direct insertion, use **Copy protected text** instead. To uninstall, select **Remove** on the browser extensions page.
 
 ### Direct paste in Chrome
 
-After reloading the extension and refreshing a supported chat tab, hover over **Write with PromptVeil**. The updated launcher shows **PromptVeil Paste and Send guard is active**. Then paste `Customer ID: 12345678. Invest ₹25,000.` into the native message field. PromptVeil should insert the masked result at the current selection. Separately paste `Password: never-valid-fixture` and confirm the chat stays unchanged. If a paste needs review, open the private composer. To check the Send safeguard with synthetic data, type a labeled numeric customer ID into an empty native chat and press Enter. The first action should mask the draft and pause submission. Also try clicking the Send arrow after typing a raw synthetic draft. The first click should mask it and leave it unsent. The reviewed draft can then be sent with a second action.
+After reloading the extension and refreshing a supported chat tab, hover over **Write with PromptVeil**. The updated launcher shows **PromptVeil Paste and Send guard is active**. Then paste `Draft a friendly reply to a customer whose package arrived damaged. Customer ID: 48372651. Email: maya.patel@example.com. Offer a replacement or a $48 refund.` into the native message field. PromptVeil should insert the masked result at the current selection. Separately paste `Password: never-valid-fixture` and confirm the chat stays unchanged. If a paste needs review, open the private composer. To check the Send safeguard with synthetic data, type the customer-support prompt above into an empty native chat and press Enter. The first action should mask the draft and pause submission. Also try clicking the Send arrow after typing a raw synthetic draft. The first click should mask it and leave it unsent. The reviewed draft can then be sent with a second action.
 
 ### Debug native paste or Send
 
@@ -55,7 +55,7 @@ Install the release tarball or its local equivalent.
 ```sh
 npm install -g ./dist/cli/promptveil-0.1.0.tgz
 promptveil --help
-printf '%s\n' 'Customer ID: 12345678. Invest ₹25,000.' | promptveil protect
+printf '%s\n' 'Draft a friendly reply to a customer whose package arrived damaged. Customer ID: 48372651. Email: maya.patel@example.com. Offer a replacement or a $48 refund.' | promptveil protect
 promptveil scan --file ./sample.txt --json
 ```
 
@@ -73,7 +73,7 @@ promptveil install claude-code --apply
 promptveil doctor claude-code
 ```
 
-Restart the agent as needed. For Codex, review and trust the PromptVeil entry through `/hooks`. For Cursor, verify the local Agent Chat hook using the [README instructions](../README.md#cursor-agent-chat). Try an ordinary synthetic prompt, then submit `Customer ID: 12345678.` and check that the guard blocks it. To continue, protect that input with the CLI and resubmit the protected result. The guard is effective only on a host and configuration where the hook runs.
+Restart the agent as needed. For Codex, review and trust the PromptVeil entry through `/hooks`. For Cursor, verify the local Agent Chat hook using the [README instructions](../README.md#cursor-agent-chat). Try an ordinary synthetic prompt, then submit `Draft a friendly reply to a customer whose package arrived damaged. Customer ID: 48372651. Email: maya.patel@example.com. Offer a replacement or a $48 refund.` and check that the guard blocks it. To continue, protect that input with the CLI and resubmit the protected result. The guard is effective only on a host and configuration where the hook runs.
 
 Run `promptveil uninstall <agent> --apply` to remove the corresponding PromptVeil hook. Backups, when created, are beside the original configuration and may contain private settings. Keep them local.
 

@@ -41,3 +41,9 @@ The focused security suite verified relay rejection before upstream access and p
 Browser transfer and the historical synthetic PEM finding were investigated in [PS-021](../sessions/PS-021.md).
 
 The public README and its CI guide were updated and verified in [PS-022](../sessions/PS-022.md).
+
+The refreshed landing page and desktop and mobile browser checks are recorded in [PS-023](../sessions/PS-023.md).
+
+The public customer-support example and its browser verification are recorded in [PS-024](../sessions/PS-024.md).
+
+The generated documentation hub and its verification are recorded in [PS-025](../sessions/PS-025.md).

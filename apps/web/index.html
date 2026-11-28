@@ -1,20 +1,77 @@
-<!doctype html><html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'none'; object-src 'none'; connect-src 'none'">
-<title>PromptVeil — Private prompts for AI</title>
-<link rel="icon" href="./app/icon-192.png"><link rel="stylesheet" href="./assets/style.css"><link rel="stylesheet" href="./assets/landing.css">
-</head><body>
-<header class="site-header"><a class="brand" href="./">PromptVeil</a><nav><a href="./docs/">Docs</a> <a href="@@REPO@@">GitHub</a></nav></header>
-<main class="landing">
-<section class="hero"><div><h1>Protect private details before you prompt.</h1>
-<p class="muted">Scan prompts on your device. Keep ordinary amounts and context, mask supported identifiers, and stop detected credentials before sharing.</p>
-<div class="actions"><a class="button" href="./app/">Open PromptVeil</a><a href="@@RELEASE@@">Downloads</a></div></div>
-<div class="example">
-<p class="muted">Synthetic example</p><h2>Before</h2><p>Customer ID: 12345678. Invest ₹25,000.</p>
-<h2>Protected</h2><p>Customer ID: <mark>[Customer ID]</mark>. Invest ₹25,000.</p>
-</div></section>
-<section class="platforms" aria-label="Platforms">
-<article><h2>Laptop</h2><p>Scan in the private extension composer before inserting or copying.</p><a href="./docs/#laptop">Chrome and Edge setup</a></article>
-<article><h2>Mobile</h2><p>Install the composer and scan offline after setup.</p><a href="./docs/#mobile">Android and iPhone setup</a></article>
-<article><h2>Terminal</h2><p>Protect stdin and set up supported coding-agent guards.</p><a href="./docs/#terminal">CLI and agent setup</a></article>
-</section></main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'none'; object-src 'none'; connect-src 'none'; base-uri 'none'">
+  <meta name="description" content="PromptVeil brings local-first privacy to everyday AI use. Scan prompts on your device before sharing them in AI chats and coding tools.">
+  <meta name="theme-color" content="#071417">
+  <title>PromptVeil | The next step in AI safety</title>
+  <link rel="icon" href="./app/icon-192.png">
+  <link rel="stylesheet" href="./assets/style.css">
+  <link rel="stylesheet" href="./assets/landing.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="wordmark" href="./"><img src="./app/icon-192.png" alt="" width="34" height="34">PromptVeil</a>
+      <nav aria-label="Main navigation">
+        <a href="#how-it-works">How it works</a>
+        <a href="./docs/">Docs</a>
+        <a href="@@REPO@@">GitHub source</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Open-source, on-device privacy</p>
+        <h1 id="hero-title">The next step in AI safety.</h1>
+        <p class="lead">Protect private details before you share an AI prompt. Scan on your phone or computer, mask supported personal information, and keep the context your AI needs.</p>
+        <div class="actions">
+          <a class="button" href="./app/">Open PromptVeil</a>
+          <a class="button button-secondary" href="@@RELEASE@@">Downloads</a>
+        </div>
+        <p class="hero-note">The browser composer works without an account or API key.</p>
+      </div>
+      <div class="hero-art">
+        <img src="./assets/promptveil-hero.png" width="1774" height="887" alt="PromptVeil masks a fictional customer ID and email while preserving the damaged-package request and $48 refund">
+      </div>
+    </section>
+
+    <section class="workflow" id="how-it-works" aria-labelledby="workflow-title">
+      <div>
+        <p class="eyebrow">How it works</p>
+        <h2 id="workflow-title">Keep the context. Mask the private details.</h2>
+        <p class="section-copy">Paste text into the local composer, run a scan, then review and copy the protected draft. In this fictional support request, PromptVeil masks the customer ID and email while keeping the damaged-package context and $48 refund.</p>
+      </div>
+      <div class="example">
+        <dl>
+          <div><dt>Original prompt</dt><dd>Draft a friendly reply to a customer whose package arrived damaged. Customer ID: <span class="private-value">48372651</span>. Email: <span class="private-value">maya.patel@example.com</span>. Offer a replacement or a $48 refund.</dd></div>
+          <div><dt>Protected draft</dt><dd>Draft a friendly reply to a customer whose package arrived damaged. Customer ID: <mark>[Customer ID]</mark>. Email: <mark>[Email]</mark>. Offer a replacement or a $48 refund.</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="platform-section" aria-labelledby="platform-title">
+      <h2 id="platform-title">Use it where you prompt</h2>
+      <div class="platforms">
+        <article><h3>Browser extension</h3><p>Scan in a private composer and insert approved text into a chat draft.</p><a href="./docs/install/#laptop">Chrome and Edge setup</a></article>
+        <article><h3>Installable web app</h3><p>Install the composer and scan locally, even offline after setup.</p><a href="./docs/install/#mobile">Android and iPhone setup</a></article>
+        <article><h3>CLI and coding agents</h3><p>Protect terminal input or install a local guard for supported agents.</p><a href="./docs/cli/">CLI and agent setup</a></article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <p>PromptVeil <span>by Jay Shah</span></p>
+      <nav aria-label="Creator links">
+        <a href="https://github.com/JS12540">GitHub profile</a>
+        <a href="https://www.linkedin.com/in/jay-shah-4a4829209/">LinkedIn</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

@@ -488,7 +488,7 @@ A GitHub Pages PWA may optionally be published at `https://YOUR_USERNAME.github.
 - [ ] Public source, AGENTS.md, meaningful commit history, attribution and licenses.
 - [ ] Clean install tested on documented platforms, checksums and versioned assets.
 - [ ] Extension ZIP, CLI package, PWA link or offline bundle; clear model opt-in instructions.
-- [ ] Demo: allow ₹25,000 investment prompt; mask synthetic customer ID; block fake secret; mobile offline scan; terminal and verified agent path; analytics no raw text.
+- [ ] Demo: mask the fictional customer ID and email in a damaged-package reply prompt while preserving the $48 refund; block fake secret; mobile offline scan; terminal and verified agent path; analytics no raw text.
 - [ ] Actual per-entity metrics, false-positive rate, runtime/download size, device/browser versions and known limitations.
 - [ ] All rubric evidence indexed, real model/effort records, CI and commit links.
 - [ ] Public links tested and form submitted before deadline.

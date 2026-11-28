@@ -15,7 +15,9 @@ const contents = {
   '.png': 'image/png', '.webmanifest': 'application/manifest+json',
 };
 const prefix = '/promptveil/';
-const marker = '56821947';
+const marker = '48372651';
+const sampleEmail = 'maya.patel@example.com';
+const supportPrompt = `Draft a friendly reply to a customer whose package arrived damaged. Customer ID: ${marker}. Email: ${sampleEmail}. Offer a replacement or a $48 refund.`;
 
 const server = createServer(async (request, response) => {
   const { pathname } = new URL(request.url, 'http://127.0.0.1');
@@ -38,12 +40,13 @@ const server = createServer(async (request, response) => {
 });
 
 async function scan(page) {
-  await page.getByLabel('Prompt', { exact: true }).fill(`Customer ID: ${marker}. Invest ₹25,000.`);
+  await page.getByLabel('Prompt', { exact: true }).fill(supportPrompt);
   await page.getByRole('button', { name: 'Scan prompt' }).click();
   await page.getByText('Protected text is ready.').waitFor();
   const output = await page.getByLabel('Protected text').inputValue();
   assert.doesNotMatch(output, new RegExp(marker));
-  assert.match(output, /₹25,000/);
+  assert.equal(output.includes(sampleEmail), false);
+  assert.equal(output.replace(/\[PV_CUSTOMER_ID_[^\]]+\]/, marker).replace(/\[PV_EMAIL_[^\]]+\]/, sampleEmail), supportPrompt);
   assert.match(output, /\[PV_CUSTOMER_ID_/);
   return output;
 }
@@ -219,8 +222,26 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     context.on('request', request => requests.push(request.url()));
     await page.goto(origin + prefix);
-    await page.getByRole('heading', { name: 'Protect private details before you prompt.' }).waitFor();
-    await page.getByRole('link', { name: 'Open PromptVeil' }).click();
+    await page.getByRole('heading', { name: 'The next step in AI safety.' }).waitFor();
+    const [original, protectedDraft] = await page.locator('.example dd').allTextContents();
+    assert.equal(original, supportPrompt);
+    assert.equal(protectedDraft, supportPrompt.replace(marker, '[Customer ID]').replace(sampleEmail, '[Email]'));
+    await page.getByRole('link', { name: 'Docs', exact: true }).click();
+    await page.getByRole('heading', { name: 'PromptVeil documentation' }).waitFor();
+    const quickStart = page.getByRole('link', { name: 'Run PromptVeil locally and scan your first prompt', exact: true });
+    assert.equal(await quickStart.locator('..').textContent(), 'Run PromptVeil locally and scan your first prompt.');
+    await page.getByText('Search docs', { exact: true }).click();
+    await page.getByRole('searchbox').fill('install the cli package');
+    await page.getByRole('link', { name: 'Command-line reference / Install the CLI package' }).click();
+    assert.equal(new URL(page.url()).pathname, prefix + 'docs/cli/');
+    await page.getByRole('heading', { name: 'Install the CLI package' }).waitFor();
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.getByText('Browse documentation', { exact: true }).click();
+    await page.getByRole('link', { name: 'Quick start', exact: true }).click();
+    await page.getByRole('heading', { name: 'Scan your first prompt' }).waitFor();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.getByRole('link', { name: 'Open composer', exact: true }).click();
     await page.getByText('Ready to scan offline.').waitFor();
     await page.evaluate(() => navigator.serviceWorker.ready.then(() => {
       if (navigator.serviceWorker.controller) return;

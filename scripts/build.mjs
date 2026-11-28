@@ -4,7 +4,7 @@ import { stripTypeScriptTypes } from 'node:module';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { chatOrigins } from '../apps/extension/providers.ts';
-import { renderInstallGuide } from './markdown.mjs';
+import { buildDocs } from './build-docs.mjs';
 
 const output = 'dist';
 const web = join(output, 'web');
@@ -17,8 +17,8 @@ const vercelRepository = VERCEL_GIT_PROVIDER === 'github' && VERCEL_GIT_REPO_OWN
   : '';
 const repository = process.env.GITHUB_REPOSITORY || vercelRepository;
 if (repository && !/^[\w.-]+\/[\w.-]+$/.test(repository)) throw new Error('Invalid GITHUB_REPOSITORY.');
-const sourceLink = repository ? `https://github.com/${repository}` : './docs/';
-const releaseLink = repository ? `${sourceLink}/releases/latest` : './docs/#laptop';
+const sourceLink = `https://github.com/${repository || 'JS12540/promptveil'}`;
+const releaseLink = repository ? `${sourceLink}/releases/latest` : './docs/install/#laptop';
 const html = (title, head, content) => `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${title}</title>${head}</head><body>${content}</body></html>\n`;
@@ -89,12 +89,7 @@ const modules = ['packages/core/index.ts', 'packages/ui/composer.ts', 'packages/
 // Keep the worker and its module imports inside the PWA service worker scope.
 await compile(join(web, 'app'), [...modules, 'apps/web/app/index.ts']);
 
-const docs = await readFile('docs/install.md', 'utf8');
-const installText = renderInstallGuide(docs, repository ? sourceLink : '');
-await put(join(web, 'docs/index.html'), html('PromptVeil · Installation', localCsp
-  + '<link rel="stylesheet" href="../assets/style.css"><link rel="stylesheet" href="./docs.css">',
-  `<main class="composer"><a href="../">PromptVeil home</a><h1>Installation guide</h1><p><a href="${repository ? sourceLink + '/blob/main/docs/README.md' : '../app/'}">${repository ? 'All project documentation' : 'Open the private composer'}</a></p>${installText}</main>`));
-await put(join(web, 'docs/docs.css'), 'pre { overflow: auto; padding: 1rem; border-radius: .5rem; background: #132238; } li { margin: .4rem 0; }');
+await buildDocs(web, html, sourceLink, localCsp);
 
 for (const size of [192, 512]) {
   await cp(`apps/web/icons/icon-${size}.png`, join(web, `app/icon-${size}.png`));
@@ -106,6 +101,7 @@ const sw = (await readFile('apps/web/app/sw.js', 'utf8'))
   .replace('/* CACHE_NAME */ null', JSON.stringify(`promptveil-${cacheHash.digest('hex').slice(0, 16)}`))
   .replace('/* PRECACHE */ null', JSON.stringify(['./', ...offlineFiles.map(file => `../${file}`)]));
 await put(join(web, 'app/sw.js'), sw);
+await cp('docs/assets/promptveil-hero.png', join(web, 'assets/promptveil-hero.png'));
 
 if (webOnly) {
   console.log('Built the static website in dist/web/.');

@@ -1,50 +1,85 @@
-const html = text => text.replace(/[&<>"]/g, value => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[value]);
+import { posix } from 'node:path';
 
-export function renderInstallGuide(markdown, sourceLink) {
-  const sections = new Set(['laptop', 'mobile', 'terminal']);
-  const inline = text => text.split(/(`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g)
-    .map(fragment => {
-      if (fragment.startsWith('`') && fragment.endsWith('`')) return `<code>${html(fragment.slice(1, -1))}</code>`;
-      if (fragment.startsWith('**') && fragment.endsWith('**')) return `<strong>${html(fragment.slice(2, -2))}</strong>`;
-      const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(fragment);
-      if (link) {
-        const [, title, target] = link;
-        if (target.startsWith('https://')) return `<a href="${html(target)}">${html(title)}</a>`;
-        if (sourceLink && /^[\w.-]+\.md(?:#[\w-]+)?$/.test(target)) {
-          return `<a href="${sourceLink}/blob/main/docs/${html(target)}">${html(title)}</a>`;
-        }
-        return html(title);
-      }
-      return html(fragment);
-    }).join('');
+export const escapeHtml = text => text.replace(/[&<>"]/g, char => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
+})[char]);
 
-  const rendered = [];
+const slug = text => text.toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, '').replace(/\s+/g, '-');
+
+export function renderGuide(markdown, { file, routes, docsRoot, source }) {
+  const headings = [];
+  const ids = new Set();
+  const inline = text => text.split(/(`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g).map(part => {
+    if (part.startsWith('`') && part.endsWith('`')) return '<code>' + escapeHtml(part.slice(1, -1)) + '</code>';
+    if (part.startsWith('**') && part.endsWith('**')) return '<strong>' + escapeHtml(part.slice(2, -2)) + '</strong>';
+    const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(part);
+    if (!link) return escapeHtml(part);
+    const [, label, target] = link;
+    let href;
+    if (/^https?:\/\//.test(target) || target.startsWith('#')) href = target;
+    else if (!/^(?:[a-z][a-z\d+.-]*:|\/)/i.test(target)) {
+      const [path, fragment] = target.split('#', 2);
+      const resolved = posix.normalize(posix.join(posix.dirname(file), path));
+      const route = routes.get(resolved);
+      href = (route === undefined ? source + '/blob/main/' + resolved : docsRoot + route)
+        + (fragment ? '#' + fragment : '');
+    }
+    return href ? '<a href="' + escapeHtml(href) + '">' + escapeHtml(label) + '</a>' : escapeHtml(label);
+  }).join('');
   const lines = markdown.split(/\r?\n/);
+  const blocks = [];
   let index = 0;
+  const cells = row => row.trim().replace(/^\||\|$/g, '').split('|').map(cell => inline(cell.trim()));
+  const list = /^(?:- |\d+\. )/;
+  const special = line => !line?.trim() || /^(?:#{1,6} |```|> |\|)/.test(line) || list.test(line);
   while (index < lines.length) {
     const line = lines[index++];
     if (!line.trim() || /^# /.test(line)) continue;
     if (line.startsWith('```')) {
       const code = [];
       while (index < lines.length && !lines[index].startsWith('```')) code.push(lines[index++]);
+      if (index === lines.length) throw new Error('Unclosed code fence in ' + file);
       index++;
-      rendered.push(`<pre><code>${html(code.join('\n'))}</code></pre>`);
+      blocks.push('<pre tabindex="0"><code>' + escapeHtml(code.join('\n')) + '</code></pre>');
       continue;
     }
-    const heading = /^(#{2,3})\s+(.*)$/.exec(line);
+    const heading = /^(#{2,6}) +(.*)$/.exec(line);
     if (heading) {
-      const id = heading[2].toLowerCase();
-      const tag = `h${heading[1].length}`;
-      rendered.push(`<${tag}${sections.has(id) ? ` id="${id}"` : ''}>${inline(heading[2])}</${tag}>`);
+      const level = heading[1].length;
+      const label = heading[2];
+      const base = slug(label);
+      let id = base;
+      for (let suffix = 1; ids.has(id); suffix++) id = base + '-' + suffix;
+      ids.add(id);
+      if (level <= 3) headings.push({ id, label, level });
+      blocks.push('<h' + level + ' id="' + id + '">' + inline(label) + '</h' + level + '>');
       continue;
     }
-    if (/^\d+\. /.test(line)) {
+    if (line.startsWith('|') && /^\|[\s:|-]+$/.test(lines[index] ?? '')) {
+      index++;
+      const header = cells(line).map(cell => '<th scope="col">' + cell + '</th>').join('');
+      const rows = [];
+      while (lines[index]?.startsWith('|')) {
+        rows.push('<tr>' + cells(lines[index++]).map(cell => '<td>' + cell + '</td>').join('') + '</tr>');
+      }
+      blocks.push('<div class="table-wrap" tabindex="0"><table><thead><tr>' + header + '</tr></thead><tbody>' + rows.join('') + '</tbody></table></div>');
+      continue;
+    }
+    if (list.test(line)) {
+      const pattern = line.startsWith('- ') ? /^- / : /^\d+\. /;
+      const tag = line.startsWith('- ') ? 'ul' : 'ol';
       const items = [line];
-      while (/^\d+\. /.test(lines[index] ?? '')) items.push(lines[index++]);
-      rendered.push(`<ol>${items.map(item => `<li>${inline(item.replace(/^\d+\. /, ''))}</li>`).join('')}</ol>`);
+      while (pattern.test(lines[index] ?? '')) items.push(lines[index++]);
+      blocks.push('<' + tag + '>' + items.map(item => '<li>' + inline(item.replace(pattern, '')) + '</li>').join('') + '</' + tag + '>');
       continue;
     }
-    rendered.push(`<p>${inline(line)}</p>`);
+    if (line.startsWith('> ')) {
+      blocks.push('<blockquote><p>' + inline(line.slice(2)) + '</p></blockquote>');
+      continue;
+    }
+    const paragraph = [line];
+    while (!special(lines[index])) paragraph.push(lines[index++]);
+    blocks.push('<p>' + inline(paragraph.join(' ')) + '</p>');
   }
-  return rendered.join('\n');
+  return { content: blocks.join('\n'), headings };
 }

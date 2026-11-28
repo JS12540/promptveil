@@ -1,17 +1,12 @@
 # Architecture
 
-```mermaid
-flowchart LR
-    Extension[Extension composer] --> Worker[Local detector worker]
-    PWA[Installed PWA] --> Worker
-    Worker --> Core[Shared rules and masking]
-    Worker --> Review[Review in private composer]
-    Review --> Transfer[Protected insert or copy]
-    CLI[CLI and native hooks] --> Core
-    Codex[Dedicated Codex provider] --> Gateway[Loopback relay]
-    Gateway --> Core
-    Gateway --> API[Responses API]
-```
+## Data flow
+
+- The extension and the PWA send composer text to the local scan worker. The worker uses the shared scanner and returns findings to the composer for review before protected insertion or copy.
+- The CLI and native agent hooks call the shared scanner directly.
+- The dedicated Codex provider sends supported requests to the loopback relay. The relay uses the shared scanner and forwards approved requests to the Responses API.
+
+## Components
 
 - `packages/contracts` defines finding and result types. `packages/core` performs context checks, overlap resolution, and placeholder generation without selecting a destination.
 - `packages/ui` holds the shared composer and scan worker. On origins listed in the extension provider registry, the extension draws a button that opens a Chrome-owned side panel. Raw text stays in that panel and its worker. The scoped content script handles the launch, and the transfer script receives the protected draft only. The PWA uses the browser clipboard after a user action.

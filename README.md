@@ -1,14 +1,14 @@
 # PromptVeil
 
-**Local-first privacy protection for AI prompts.**
+**The next step in AI safety.**
 
-Scan prompts on your device, mask supported personal information, and redact or block detected credentials before submission. Use PromptVeil as an offline web app, a Chromium extension, a terminal CLI, or a guard for supported coding agents.
+PromptVeil makes privacy part of everyday AI use. Before you share a prompt, scan it on your device to mask supported personal details and redact or block detected credentials. Start with the offline web app on a phone or computer, use the Chromium extension in a supported chat, or bring the same protection to your terminal and supported coding agents.
 
 [![Verify on main](https://github.com/JS12540/promptveil/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/JS12540/promptveil/actions/workflows/ci.yml)
 [![Code scanning on main](https://github.com/JS12540/promptveil/actions/workflows/codeql.yml/badge.svg?branch=main&event=push)](https://github.com/JS12540/promptveil/actions/workflows/codeql.yml)
 [![Apache 2.0 license](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
-![A teal privacy shield masks selected lines as a prompt passes through it](docs/assets/promptveil-hero.png)
+![PromptVeil masks a fictional customer ID and email in a damaged-package reply while preserving the $48 refund](docs/assets/promptveil-hero.png)
 
 [Quick start](#quick-start) | [Documentation](docs/README.md) | [Compatibility](docs/compatibility.md) | [Contributing](CONTRIBUTING.md)
 
@@ -17,24 +17,23 @@ Scan prompts on your device, mask supported personal information, and redact or 
 ## Table of contents
 
 - [Quick start](#quick-start)
-- [What you can use](#what-you-can-use)
-- [Detection coverage](#detection-coverage)
-- [Models and data flow](#models-and-data-flow)
-- [Set up from a source ZIP](#set-up-from-a-source-zip)
+- [Publish the extension](#publish-the-extension)
 - [Run the website and PWA](#run-the-website-and-pwa)
 - [Install the Chrome or Edge extension](#install-the-chrome-or-edge-extension)
 - [Install from a browser store](#install-from-a-browser-store)
-- [Publish the extension](#publish-the-extension)
 - [Install the CLI](#install-the-cli)
 - [Set up coding-agent guards](#set-up-coding-agent-guards)
 - [Run local verification](#run-local-verification)
 - [CI and security](#ci-and-security)
+- [What you can use](#what-you-can-use)
+- [Detection coverage](#detection-coverage)
+- [Models and data flow](#models-and-data-flow)
 - [Deploy the website to Vercel](#deploy-the-website-to-vercel)
 - [Repository layout and contributing](#repository-layout-and-contributing)
 
 ## Quick start
 
-From a checkout or extracted source archive, use Node.js **22.18+** and npm. Run this command in the folder containing `package.json`.
+From a repository checkout, use Node.js **22.18+** and npm. Run this command in the folder containing `package.json`.
 
 ```sh
 npm run dev
@@ -43,128 +42,19 @@ npm run dev
 Open [the local preview](http://127.0.0.1:8000/), choose **Open PromptVeil**, paste the synthetic example below, and select **Scan prompt**. The PWA scans locally without an API key.
 
 ```text
-Before     Customer ID: 12345678. Invest ₹25,000.
-Protected  Customer ID: [PV_CUSTOMER_ID_...]. Invest ₹25,000.
+Before     Draft a friendly reply to a customer whose package arrived damaged. Customer ID: 48372651. Email: maya.patel@example.com. Offer a replacement or a $48 refund.
+Protected  Draft a friendly reply to a customer whose package arrived damaged. Customer ID: [PV_CUSTOMER_ID_...]. Email: [PV_EMAIL_...]. Offer a replacement or a $48 refund.
 ```
 
-For installation and deeper setup, see the [browser extension](#install-the-chrome-or-edge-extension), [CLI](#install-the-cli), and [coding-agent guards](#set-up-coding-agent-guards).
+PromptVeil generates the placeholder suffixes when it scans.
 
-## What you can use
+The running site includes the documentation hub at [http://127.0.0.1:8000/docs/](http://127.0.0.1:8000/docs/). It includes setup, usage, CLI commands, agent guides, troubleshooting, and project reference pages.
 
-| Surface | Workflow |
-| --- | --- |
-| Landing page | Plain HTML and CSS with a fixed synthetic demo. [Source](apps/web/index.html) |
-| Installable PWA | TypeScript compiled to browser JavaScript. Mask and copy locally, with session-only restoration for supported PII. [Source](apps/web/app/index.ts) |
-| Chrome | Paste a complete prompt directly into a recognized AI chat editor for automatic local scanning, or type in the private side panel and use **Protect and insert**. |
-| Chrome and Edge toolbar | The private composer can transfer approved text to a supported editor or clipboard. |
-| CLI | Protect stdin or scan a file for findings that omit detected values. |
-| Claude Code, Codex, Cursor Agent Chat, and Gemini CLI | Install a local prompt hook that stops a flagged submission. See the compatibility matrix for live client results. |
-| Codex relay | Route supported text-based Responses API requests through a local scanner. Fixture checks passed. Live provider verification is pending. |
-
-## Detection coverage
-
-PromptVeil uses text patterns and context. It is independent of file extensions and has fixture coverage for specific constructs. Coverage varies with how a value is written and which path carries it.
-
-| Area | Covered examples |
-| --- | --- |
-| Code and config | Credential assignments tested in JavaScript, TypeScript, Python, Go, Kotlin, PowerShell, and PHP-style syntax. Config masking covers JSON scalars, including nested arrays, and common line-based YAML, TOML, INI, properties, and shell assignments. Docker and Kubernetes environment declarations also have targeted cases. |
-| Credentials | Supported private-key markers, selected OpenAI, GitHub and AWS token signatures, JWT-shaped tokens, credential assignments, authorization headers, and database credentials in supported URLs. Config mode also masks unfamiliar assignment values. |
-| Personal information | Email, PAN, UPI, and supported labeled forms of customer and account IDs, phone numbers, card numbers, Aadhaar, names, addresses, dates of birth, US SSNs, and IFSC routing codes. Actions vary by surface. |
-| Coding environments | Local CLI on supported Node platforms, native prompt hooks for Claude Code, Codex, Cursor Agent Chat and Gemini CLI, and supported tool-output masking in the dedicated Codex relay. Check the matrix for observed host and auth coverage. |
-
-Unknown or computed secrets, arbitrary encodings, unsupported syntax, and data outside the configured guard can escape detection. The 650-prompt evaluation measures this synthetic corpus. [Compatibility](docs/compatibility.md) · [Threat model](docs/threat-model.md) · [Evaluation method](eval/README.md)
-
-## Models and data flow
-
-| Flow | Model used | What runs or leaves the device |
-| --- | --- | --- |
-| Landing page | None | Static assets and a fixed synthetic example. |
-| PWA and browser extension | None for protection | The shared TypeScript scanner runs in the browser. The PWA can scan offline. When you submit in a third-party chat, that chat selects and runs its own model. |
-| Standalone terminal CLI | None | Node.js scans text locally. The CLI has no inference step. |
-| Claude Code, Codex, Cursor, and Gemini native hooks | None for the hook | A local command scans the submitted text. The host agent manages its own model and authentication for approved turns. |
-| Codex relay | The model selected in the routed Codex client | The local gateway applies rules before forwarding supported requests to OpenAI. The relay profile does not set a model. A live relay session uses the maintainer or user’s configured upstream API key. |
-| GitHub Actions and evaluation | None | Deterministic fixtures and security scanners. The Codex 0.172.0 smoke tests name `gpt-5.4` in their test config and use local hook or mock Responses checks. They do not call that model or require a provider key. |
-| Project development | Codex session settings recorded when visible | The Evidence Pack records model and reasoning effort where available and marks missing values. Project development settings are separate from runtime protection. |
-
-[Shared scanner](packages/core/index.ts) · [Codex smoke test](tests/e2e/codex.mjs) · [Evidence Pack](evidence/README.md)
-
-## Set up from a source ZIP
-
-1. Extract the ZIP and open the `promptveil` folder in VS Code. Open an integrated terminal in the folder containing `package.json`.
-2. Install Node.js **22.18 or later** with npm. Install Python 3 if you plan to package the extension or CLI. The website and PWA preview needs Node and npm only.
-3. To try the website and PWA immediately, run `npm run dev` and open the local URL printed in the terminal. The default is `http://127.0.0.1:8000/`. Use `Ctrl+C` to stop it. [Website and offline PWA checks](#run-the-website-and-pwa)
-4. To install the pinned development dependencies and verify the source, run the following from the same folder. The first command downloads pnpm and the development dependencies.
-
-```sh
-npx --yes pnpm@10.11.0 install --frozen-lockfile
-npm run typecheck
-npm test
-npm run test:security
-npm run eval
-```
-
-5. With Python 3 installed, run `npm run build` and `npm run release:check` to create and verify the packages under `dist/`. For Chrome or Edge, load `dist/extension/` as an unpacked extension. To try the source CLI without installing it globally, run `node apps/cli/index.ts --help`. [Extension setup](#install-the-chrome-or-edge-extension) · [CLI setup](#install-the-cli)
-
-The website, browser extension, local CLI, and synthetic tests can be tried without an API key or `.env` file. A live Codex relay is a separate optional setup. [Coding-agent setup](#set-up-coding-agent-guards)
-
-## Run the website and PWA
-
-From the repo root in the VS Code terminal, use Node.js **22.18+** and npm.
-
-```bash
-npm run dev
-```
-
-1. Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) for the landing page.
-2. Select **Open PromptVeil** or open [the PWA](http://127.0.0.1:8000/app/).
-3. Enter `Customer ID: 12345678. Invest ₹25,000.` and click **Scan prompt**. Verify that the customer ID is masked and the amount remains.
-4. Try `Password: never-valid-fixture`. The output should read `Password: [PV_REDACTED]`. For pasted configuration, enable **Mask all config values, including unknown fields**.
-5. Wait for **Ready to scan offline**. Stop the preview with `Ctrl+C`, reload the already-open PWA URL in the same browser profile, and scan the first example again.
-
-These commands need Node and npm. Restart `npm run dev` after source edits. If port 8000 is in use, start with `PORT=8001 npm run dev` on macOS or Linux and open port 8001.
-
-### Install on a phone
-
-Use a deployed HTTPS address on the phone and open the **Open PromptVeil** link. In Android Chrome, use the app’s install button when available or the browser menu. In iPhone Safari, use **Share → Add to Home Screen** and enable **Open as Web App** if offered. Launch from the new icon, wait for offline readiness, enable airplane mode, and repeat the synthetic scan. Remove it through your home screen or app settings. [Chrome web app installability](https://developer.chrome.com/docs/lighthouse/pwa/installable-manifest/) · [Apple web app installation](https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios/27)
-
-## Install the Chrome or Edge extension
-
-1. From source, run `npm run build` with Node.js 22.18+ and Python 3. The release build packages the extension and CLI. From a published release, extract `extension.zip`.
-2. Open `chrome://extensions` or `edge://extensions`. Enable **Developer mode**, select **Load unpacked**, and choose `dist/extension/` or the extracted folder containing `manifest.json`.
-3. Open a supported chat site and refresh the tab after installing or reloading the extension. Click **Write with PromptVeil** to open Chrome’s private side panel. The PromptVeil toolbar icon is another way to open the composer on these sites.
-4. Type `Customer ID: 12345678. Invest ₹25,000.` **in PromptVeil**. Select **Protect and insert**, or press **⌘+Enter** on macOS or **Ctrl+Enter** on Windows/Linux. The masked ID and unchanged amount should appear as a chat draft. Review the draft and send it when ready.
-5. Try `Password: never-valid-fixture`. PromptVeil should block the transfer. To uninstall, select **Remove** on the browser extensions page.
-
-The in-page launcher is configured for ChatGPT, Claude, Gemini, Grok, DeepSeek, Perplexity, Microsoft Copilot, Mistral Vibe, Poe, and Qwen. The extension accesses those sites to place protected text into the chat editor. On other HTTPS chat sites, focus the empty message field before opening PromptVeil from the toolbar and choose **Protect and insert**. A protected copy option appears if direct insertion is unavailable. Keep the native chat editor empty for the first transfer. See the [compatibility matrix](docs/compatibility.md) for live verification status. [Chrome Side Panel API](https://developer.chrome.com/docs/extensions/reference/api/sidePanel)
-
-### Paste directly into a supported chat
-
-After loading or reloading PromptVeil, refresh the chat page. Hover over **Write with PromptVeil** to confirm that the updated native guard is active. Copy the full synthetic text `Customer ID: 12345678. Invest ₹25,000.` and paste it into the native chat editor. PromptVeil cancels the original paste and inserts approved plain text at the current selection. The ID should be masked and the amount preserved. A detected credential blocks the paste. An ambiguous result stays out of the editor until you review it in the PromptVeil composer. On a recognized chat editor, Enter and Send also check the current draft. A clean draft proceeds immediately. If the guard masks an existing draft, review the result and send it again. Detected credentials and unresolved findings pause Send. During a scan started in the private composer, recognized Enter and Send actions in that chat tab are canceled until scanning and insertion finish. Press Send again after reviewing.
-
-When you type directly, a brief pause triggers local feedback while leaving the draft editable. Enter and Send scan the latest text immediately, including inputs such as `Cusotmer id : 1234455`. The private composer is available when you want to scan before placing text on the provider page. Use **Open guard diagnostics in a new tab** from the extension popup to see the build and event counts. [Browser test steps](docs/install.md#debug-native-paste-or-send)
-
-## Install from a browser store
-
-Store listings are pending. The [local installation steps](#install-the-chrome-or-edge-extension) are available now. Once a listing is live, the maintainer will link it here and in the GitHub release notes.
-
-### Chrome public installation
-
-1. In a regular **desktop Chrome** window, open the official PromptVeil listing linked from this README. Check the publisher name, choose **Add to Chrome**, review the requested permissions, and choose **Add extension**.
-2. Click the puzzle-piece **Extensions** icon beside the address bar. Pin PromptVeil if you want its icon always visible.
-3. Open `chrome://extensions` or choose **Extensions → Manage extensions**. Make sure the PromptVeil toggle is on. Under **Details → Site access**, allow access to the supported chat sites you want guarded. Automatic paste and Send protection needs that site access. Refresh any chat tab already open.
-4. Open a supported chat, click **Write with PromptVeil**, and try `Customer ID: 12345678. Invest ₹25,000.` The inserted draft should mask the synthetic ID and preserve the amount.
-5. If you previously loaded an unpacked build, disable or remove that copy after the store version is installed so both copies do not handle the same chat. A managed work or school profile may restrict installation. On phones, see [the PWA installation guide](#install-on-a-phone). [Chrome installation and site access](https://support.google.com/chrome/answer/2664769)
-
-### Other browsers after publication
-
-| Browser | Install and enable |
-| --- | --- |
-| Brave desktop | Open the official Chrome Web Store listing in Brave and choose **Add to Brave**. Manage the toggle under **Menu → Extensions**. [Brave installation guide](https://brave.com/learn/using-chrome-extensions-in-brave/) |
-| Microsoft Edge desktop | Open the official Edge Add-ons listing, choose **Get**, and confirm **Add extension**. Manage it in `edge://extensions`. Edge also allows installation from the Chrome Web Store when your browser permits extensions from other stores. [Microsoft installation guide](https://support.microsoft.com/en-us/edge/add-turn-off-or-remove-extensions-in-microsoft-edge) |
-| Firefox | Open the official Mozilla Add-ons listing, choose **Add to Firefox**, and confirm the permission prompt. Manage the extension in `about:addons`. [Mozilla installation guide](https://support.mozilla.org/en-US/kb/find-and-install-add-ons-add-features-to-firefox) |
-| Safari | Install the containing app from the App Store. On Mac, select PromptVeil in **Safari → Settings → Extensions**. On iPhone or iPad, open **Settings → Apps → Safari → Extensions** and enable it. Grant access to the supported sites when prompted. [Safari on Mac](https://support.apple.com/guide/safari/extensions-sfri32153/mac) · [Safari on iPhone](https://support.apple.com/en-ie/guide/iphone/iphab0432bf6/27/ios/27) |
+See the [installation guide](docs/install.md) or go directly to the [browser extension](#install-the-chrome-or-edge-extension), [CLI](#install-the-cli), and [coding-agent guards](#set-up-coding-agent-guards).
 
 ## Publish the extension
+
+This section is for maintainers preparing browser-store releases. To use PromptVeil now, follow the [Chrome and Edge setup](#install-the-chrome-or-edge-extension).
 
 A GitHub release distributes the source and build archives. Each store publishes and updates its own listing. The current repository builds a Chromium Manifest V3 ZIP. It depends on `chrome.sidePanel.open` and a Chromium background service worker. Firefox and Safari need browser-specific packages and verification before submission.
 
@@ -178,22 +68,45 @@ A GitHub release distributes the source and build archives. Each store publishes
 
 ### Prepare a store build
 
-1. Build from the intended release commit with Node.js 22.18+ and Python 3. Run `npm test`, `npm run test:security`, `npm run build`, and `npm run release:check`. The Chromium store upload is `dist/extension.zip` with `manifest.json` at the archive root. GitHub's automatically generated source archive and `site.zip` serve other purposes.
-2. Test the candidate in a clean profile on each target browser. Check supported-site permissions, the private composer, direct paste, Enter and Send, secret blocking, and install/update behavior. For mobile ports, repeat on a physical device. Record results in the [compatibility matrix](docs/compatibility.md).
-3. Prepare a public support link, an accurate privacy policy hosted at a public URL, a clear description, an icon, and synthetic screenshots. For Chrome, prepare at least one 1280 × 800 screenshot. Link the privacy policy from the product site and supply any required store-specific disclosures. [Chrome listing assets](https://developer.chrome.com/docs/webstore/cws-dashboard-listing) · [Chrome Web Store user-data policies](https://developer.chrome.com/docs/webstore/program-policies/policies)
-4. Describe the single purpose as local protection for AI chat prompts. The current build scans on-device, has no extension analytics endpoint, and keeps restorable mappings in session memory. Explain that users can manually copy or insert protected text, and their chosen chat service receives what they submit there. Justify `activeTab` for user-initiated access, `scripting` for inserting approved text, `sidePanel` for the private composer, and the named host permissions for automatic guards on those chat sites. Make the declarations match the actual build submitted to each store. [Chrome privacy fields](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy) · [PromptVeil threat model](docs/threat-model.md)
+1. **Build and verify the release candidate.** From the intended release commit, use Node.js 22.18+ and Python 3. Run these commands in order.
+
+   ```sh
+   npm test
+   npm run test:security
+   npm run build
+   npm run release:check
+   ```
+
+2. **Find the upload file.** Use `dist/extension.zip`. Confirm that `manifest.json` is at the ZIP root and its version matches the intended release. Load `dist/extension/` unpacked for your local test.
+3. **Test in a clean browser profile.** Run the following on each browser you plan to support:
+
+   - Check that the extension requests the expected permissions and opens its private composer.
+   - Paste the fictional damaged-package prompt from [Quick start](#quick-start). Confirm the ID and email are masked and the refund amount is preserved.
+   - On a supported chat site, verify insertion, direct paste, Enter, and Send. Type a fresh fictional draft directly into the chat and confirm the first Send attempt leaves a masked draft ready for review.
+   - Try the synthetic credential from the [unpacked extension guide](#install-the-chrome-or-edge-extension) and confirm the guard blocks it.
+   - Test both a fresh install and an upgrade when a previous release exists. Record results in the [compatibility matrix](docs/compatibility.md).
+
+4. **Prepare the listing and review materials.**
+
+   - Write a short description of the extension's purpose and prepare its icon and screenshots using fictional data.
+   - Provide a public privacy policy URL and a support link. Explain on-device scanning, session-only restoration, and what the chosen AI service receives when a user submits a draft.
+   - Explain the permissions for the submitted build. `activeTab` supports user-initiated access, `scripting` inserts approved text, `sidePanel` hosts the private composer, and the named host permissions enable automatic guards on supported sites.
+   - Prepare reviewer instructions with a supported chat site, the fictional input, and the expected behavior. [Chrome listing assets](https://developer.chrome.com/docs/webstore/cws-dashboard-listing) | [Chrome privacy fields](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy) | [PromptVeil threat model](docs/threat-model.md)
 
 ### Google Chrome and Brave
 
-1. Sign into the Chrome Web Store Developer Dashboard with your publishing account. Complete registration, the one-time fee, and account verification. [Developer Dashboard](https://chrome.google.com/webstore/devconsole)
-2. Choose **Add new item**, upload `dist/extension.zip`, then complete **Store listing**, **Privacy practices**, and **Distribution**. Set visibility to **Public** and select the markets you intend to serve. Include reviewer instructions with the synthetic customer ID example and a supported chat site.
-3. Submit for review. Once the approved listing is live, verify the link signed out and do a clean installation. Test the same listing from Brave before advertising Brave support. Record the official URL and store version in the release notes. [Chrome developer registration](https://developer.chrome.com/docs/webstore/register/) · [Chrome publishing](https://developer.chrome.com/docs/webstore/publish) · [Chrome visibility and regions](https://developer.chrome.com/docs/webstore/cws-dashboard-distribution) · [Brave store route](https://brave.com/learn/using-chrome-extensions-in-brave/)
+1. **Set up your publisher account.** Sign in and complete registration and account verification. [Chrome Developer Dashboard](https://chrome.google.com/webstore/devconsole) | [Registration guide](https://developer.chrome.com/docs/webstore/register/)
+2. **Upload the ZIP.** Select **Add new item**, choose `dist/extension.zip`, and upload it.
+3. **Complete the submission.** Add the description and screenshots under **Store listing**, complete the data and permission disclosures under **Privacy**, choose visibility and regions under **Distribution**, and provide the fictional test steps under **Test instructions**.
+4. **Submit for review.** Choose whether to publish automatically after approval or publish manually when ready. [Chrome publishing guide](https://developer.chrome.com/docs/webstore/publish)
+5. **Verify the live release.** Open the public listing while signed out, install it in a fresh Chrome profile, and rerun the sample. Test installation and guard behavior from the same listing in Brave before advertising Brave support. Record the official listing URL and version in the release notes. [Brave installation guide](https://brave.com/learn/using-chrome-extensions-in-brave/)
 
 ### Microsoft Edge
 
-1. Register for the Microsoft Edge extension program in Partner Center. In the Edge workspace, select **Create new extension**, then upload the ZIP verified in Edge. [Partner Center](https://partner.microsoft.com/dashboard)
-2. Set **Availability** to **Public**, select markets, and complete **Properties**, **Privacy**, and **Store listings**. Add the required assets and synthetic certification notes.
-3. Select **Publish** to start certification. After it passes, install the listing with **Get** in a fresh Edge profile and record its official URL. [Edge publication and certification](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension)
+1. **Set up your publisher account.** Register for the Edge extension program in [Partner Center](https://partner.microsoft.com/dashboard).
+2. **Upload the Edge-tested package.** In the Edge workspace, select **Create new extension** and upload the ZIP you verified in Edge.
+3. **Complete the submission.** Fill in availability, extension properties, privacy information, and store listing assets. Add synthetic test steps in the certification notes.
+4. **Submit and verify.** Select **Publish** to start certification. Once the listing is live, use **Get** in a fresh Edge profile and repeat the sample test. Record the official URL and version. [Microsoft Edge publishing guide](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension)
 
 ### Firefox
 
@@ -209,6 +122,63 @@ A GitHub release distributes the source and build archives. Each store publishes
 
 For updates, increment the extension version, build from the matching release tag, and submit a new package to each existing store listing. Use the same listing or app identity so current users can receive updates. For Safari, also advance the containing app's build number. Verify fresh installation and upgrade before updating public links. [GitHub release procedure](docs/releasing.md) · [Chrome update procedure](https://developer.chrome.com/docs/webstore/update/)
 
+## Run the website and PWA
+
+From the repo root in the VS Code terminal, use Node.js **22.18+** and npm.
+
+```bash
+npm run dev
+```
+
+1. Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) for the landing page.
+2. Select **Open PromptVeil** or open [the PWA](http://127.0.0.1:8000/app/).
+3. Enter `Draft a friendly reply to a customer whose package arrived damaged. Customer ID: 48372651. Email: maya.patel@example.com. Offer a replacement or a $48 refund.` and click **Scan prompt**. Verify that the customer ID and email are masked and the $48 refund stays intact.
+4. Try `Password: never-valid-fixture`. The output should read `Password: [PV_REDACTED]`. For pasted configuration, enable **Mask all config values, including unknown fields**.
+5. Wait for **Ready to scan offline**. Stop the preview with `Ctrl+C`, reload the already-open PWA URL in the same browser profile, and scan the first example again.
+
+These commands need Node and npm. Restart `npm run dev` after source edits. If port 8000 is in use, start with `PORT=8001 npm run dev` on macOS or Linux and open port 8001.
+
+### Install on a phone
+
+Use a deployed HTTPS address on the phone and open the **Open PromptVeil** link. In Android Chrome, use the app’s install button when available or the browser menu. In iPhone Safari, use **Share → Add to Home Screen** and enable **Open as Web App** if offered. Launch from the new icon, wait for offline readiness, enable airplane mode, and repeat the synthetic scan. Remove it through your home screen or app settings. [Chrome web app installability](https://developer.chrome.com/docs/lighthouse/pwa/installable-manifest/) · [Apple web app installation](https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios/27)
+
+## Install the Chrome or Edge extension
+
+1. From source, run `npm run build` with Node.js 22.18+ and Python 3. The release build packages the extension and CLI. From a published release, extract `extension.zip`.
+2. Open `chrome://extensions` or `edge://extensions`. Enable **Developer mode**, select **Load unpacked**, and choose `dist/extension/` or the extracted folder containing `manifest.json`.
+3. Open a supported chat site and refresh the tab after installing or reloading the extension. Click **Write with PromptVeil** to open Chrome’s private side panel. The PromptVeil toolbar icon is another way to open the composer on these sites.
+4. Type `Draft a friendly reply to a customer whose package arrived damaged. Customer ID: 48372651. Email: maya.patel@example.com. Offer a replacement or a $48 refund.` **in PromptVeil**. Select **Protect and insert**, or press **⌘+Enter** on macOS or **Ctrl+Enter** on Windows/Linux. The draft should mask the customer ID and email and preserve the $48 refund. Review the draft and send it when ready.
+5. Try `Password: never-valid-fixture`. PromptVeil should block the transfer. To uninstall, select **Remove** on the browser extensions page.
+
+The in-page launcher is configured for ChatGPT, Claude, Gemini, Grok, DeepSeek, Perplexity, Microsoft Copilot, Mistral Vibe, Poe, and Qwen. The extension accesses those sites to place protected text into the chat editor. On other HTTPS chat sites, focus the empty message field before opening PromptVeil from the toolbar and choose **Protect and insert**. A protected copy option appears if direct insertion is unavailable. Keep the native chat editor empty for the first transfer. See the [compatibility matrix](docs/compatibility.md) for live verification status. [Chrome Side Panel API](https://developer.chrome.com/docs/extensions/reference/api/sidePanel)
+
+### Paste directly into a supported chat
+
+After loading or reloading PromptVeil, refresh the chat page. Hover over **Write with PromptVeil** to confirm that the updated native guard is active. Copy the full synthetic text `Draft a friendly reply to a customer whose package arrived damaged. Customer ID: 48372651. Email: maya.patel@example.com. Offer a replacement or a $48 refund.` and paste it into the native chat editor. PromptVeil cancels the original paste and inserts approved plain text at the current selection. The customer ID and email should be masked, and the $48 refund should stay intact. A detected credential blocks the paste. An ambiguous result stays out of the editor until you review it in the PromptVeil composer. On a recognized chat editor, Enter and Send also check the current draft. A clean draft proceeds immediately. If the guard masks an existing draft, review the result and send it again. Detected credentials and unresolved findings pause Send. During a scan started in the private composer, recognized Enter and Send actions in that chat tab are canceled until scanning and insertion finish. Press Send again after reviewing.
+
+When you type directly, a brief pause triggers local feedback while leaving the draft editable. Enter and Send scan the latest text immediately, including inputs such as `Cusotmer id : 1234455`. The private composer is available when you want to scan before placing text on the provider page. Use **Open guard diagnostics in a new tab** from the extension popup to see the build and event counts. [Browser test steps](docs/install.md#debug-native-paste-or-send)
+
+## Install from a browser store
+
+Store listings are pending. The [local installation steps](#install-the-chrome-or-edge-extension) are available now. Once a listing is live, the maintainer will link it here and in the GitHub release notes.
+
+### Chrome public installation
+
+1. In a regular **desktop Chrome** window, open the official PromptVeil listing linked from this README. Check the publisher name, choose **Add to Chrome**, review the requested permissions, and choose **Add extension**.
+2. Click the puzzle-piece **Extensions** icon beside the address bar. Pin PromptVeil if you want its icon always visible.
+3. Open `chrome://extensions` or choose **Extensions → Manage extensions**. Make sure the PromptVeil toggle is on. Under **Details → Site access**, allow access to the supported chat sites you want guarded. Automatic paste and Send protection needs that site access. Refresh any chat tab already open.
+4. Open a supported chat, click **Write with PromptVeil**, and try `Draft a friendly reply to a customer whose package arrived damaged. Customer ID: 48372651. Email: maya.patel@example.com. Offer a replacement or a $48 refund.` The inserted draft should mask the fictional customer ID and email and preserve the $48 refund.
+5. If you previously loaded an unpacked build, disable or remove that copy after the store version is installed so both copies do not handle the same chat. A managed work or school profile may restrict installation. On phones, see [the PWA installation guide](#install-on-a-phone). [Chrome installation and site access](https://support.google.com/chrome/answer/2664769)
+
+### Other browsers after publication
+
+| Browser | Install and enable |
+| --- | --- |
+| Brave desktop | Open the official Chrome Web Store listing in Brave and choose **Add to Brave**. Manage the toggle under **Menu → Extensions**. [Brave installation guide](https://brave.com/learn/using-chrome-extensions-in-brave/) |
+| Microsoft Edge desktop | Open the official Edge Add-ons listing, choose **Get**, and confirm **Add extension**. Manage it in `edge://extensions`. Edge also allows installation from the Chrome Web Store when your browser permits extensions from other stores. [Microsoft installation guide](https://support.microsoft.com/en-us/edge/add-turn-off-or-remove-extensions-in-microsoft-edge) |
+| Firefox | Open the official Mozilla Add-ons listing, choose **Add to Firefox**, and confirm the permission prompt. Manage the extension in `about:addons`. [Mozilla installation guide](https://support.mozilla.org/en-US/kb/find-and-install-add-ons-add-features-to-firefox) |
+| Safari | Install the containing app from the App Store. On Mac, select PromptVeil in **Safari → Settings → Extensions**. On iPhone or iPad, open **Settings → Apps → Safari → Extensions** and enable it. Grant access to the supported sites when prompted. [Safari on Mac](https://support.apple.com/guide/safari/extensions-sfri32153/mac) · [Safari on iPhone](https://support.apple.com/en-ie/guide/iphone/iphab0432bf6/27/ios/27) |
+
 ## Install the CLI
 
 Use the tarball from a tagged release or generate it with `npm run build`. Python 3 is used during release packaging. The installed CLI runs on Node.js.
@@ -216,8 +186,8 @@ Use the tarball from a tagged release or generate it with `npm run build`. Pytho
 ```bash
 npm install -g ./dist/cli/promptveil-0.1.0.tgz
 promptveil --help
-printf '%s\n' 'Customer ID: 12345678. Invest ₹25,000.' | promptveil protect
-printf '%s\n' 'Customer ID: 12345678.' | promptveil scan --json
+printf '%s\n' 'Draft a friendly reply to a customer whose package arrived damaged. Customer ID: 48372651. Email: maya.patel@example.com. Offer a replacement or a $48 refund.' | promptveil protect
+printf '%s\n' 'Draft a friendly reply to a customer whose package arrived damaged. Customer ID: 48372651. Email: maya.patel@example.com. Offer a replacement or a $48 refund.' | promptveil scan --json
 ```
 
 `protect` writes approved text to stdout. `scan --json` reports the status and findings without matched values. `scan --file PATH --json` reads a local file. Exit codes are `0` for success, `2` for a block or required review, and `3` for a processing failure. Run from source with `node apps/cli/index.ts protect`. On Windows, pipe synthetic text with PowerShell. Uninstall any configured hooks first, then run `npm uninstall -g promptveil`.
@@ -236,7 +206,7 @@ promptveil install claude-code --apply
 promptveil doctor claude-code
 ```
 
-PromptVeil installs `UserPromptSubmit` in `~/.claude/settings.json` or the configured `CLAUDE_CONFIG_DIR`. Restart Claude Code and review the hook under `/hooks`. Submit `Customer ID: 12345678.` using synthetic data. Expect a blocked submission. Protect the text with the CLI and submit the protected result. Remove with `promptveil uninstall claude-code --apply`. [Claude Code hook reference](https://code.claude.com/docs/en/hooks)
+PromptVeil installs `UserPromptSubmit` in `~/.claude/settings.json` or the configured `CLAUDE_CONFIG_DIR`. Restart Claude Code and review the hook under `/hooks`. Submit `Draft a friendly reply to a customer whose package arrived damaged. Customer ID: 48372651. Email: maya.patel@example.com. Offer a replacement or a $48 refund.` using synthetic data. Expect a blocked submission. Protect the text with the CLI and submit the protected result. Remove with `promptveil uninstall claude-code --apply`. [Claude Code hook reference](https://code.claude.com/docs/en/hooks)
 
 ### Codex
 
@@ -328,6 +298,45 @@ GitHub's **Dependency graph** must be enabled for PR dependency review to work. 
 **Dependabot** proposes updates to development dependencies and SHA-pinned GitHub Actions. Review the diff and upstream release notes, bring the PR up to date with `main` when needed, and merge after fresh checks pass. Review major TypeScript and Node.js type changes against the repository's pinned CI runtime. [Dependabot configuration](.github/dependabot.yml)
 
 The scheduled compatibility canary tests Node 22 and 24. The manually dispatched release workflow reruns Verify and checks release archives, checksums, and provenance. [Compatibility workflow](.github/workflows/compatibility.yml) | [Release workflow](.github/workflows/release.yml) | [Security policy](SECURITY.md)
+
+## What you can use
+
+| Surface | Workflow |
+| --- | --- |
+| Landing page | Plain HTML and CSS with a fixed synthetic demo. [Source](apps/web/index.html) |
+| Installable PWA | TypeScript compiled to browser JavaScript. Mask and copy locally, with session-only restoration for supported PII. [Source](apps/web/app/index.ts) |
+| Chrome | Paste a complete prompt directly into a recognized AI chat editor for automatic local scanning, or type in the private side panel and use **Protect and insert**. |
+| Chrome and Edge toolbar | The private composer can transfer approved text to a supported editor or clipboard. |
+| CLI | Protect stdin or scan a file for findings that omit detected values. |
+| Claude Code, Codex, Cursor Agent Chat, and Gemini CLI | Install a local prompt hook that stops a flagged submission. See the compatibility matrix for live client results. |
+| Codex relay | Route supported text-based Responses API requests through a local scanner. Fixture checks passed. Live provider verification is pending. |
+
+## Detection coverage
+
+PromptVeil uses text patterns and context. It is independent of file extensions and has fixture coverage for specific constructs. Coverage varies with how a value is written and which path carries it.
+
+| Area | Covered examples |
+| --- | --- |
+| Code and config | Credential assignments tested in JavaScript, TypeScript, Python, Go, Kotlin, PowerShell, and PHP-style syntax. Config masking covers JSON scalars, including nested arrays, and common line-based YAML, TOML, INI, properties, and shell assignments. Docker and Kubernetes environment declarations also have targeted cases. |
+| Credentials | Supported private-key markers, selected OpenAI, GitHub and AWS token signatures, JWT-shaped tokens, credential assignments, authorization headers, and database credentials in supported URLs. Config mode also masks unfamiliar assignment values. |
+| Personal information | Email, PAN, UPI, and supported labeled forms of customer and account IDs, phone numbers, card numbers, Aadhaar, names, addresses, dates of birth, US SSNs, and IFSC routing codes. Actions vary by surface. |
+| Coding environments | Local CLI on supported Node platforms, native prompt hooks for Claude Code, Codex, Cursor Agent Chat and Gemini CLI, and supported tool-output masking in the dedicated Codex relay. Check the matrix for observed host and auth coverage. |
+
+Unknown or computed secrets, arbitrary encodings, unsupported syntax, and data outside the configured guard can escape detection. The 650-prompt evaluation measures this synthetic corpus. [Compatibility](docs/compatibility.md) · [Threat model](docs/threat-model.md) · [Evaluation method](eval/README.md)
+
+## Models and data flow
+
+| Flow | Model used | What runs or leaves the device |
+| --- | --- | --- |
+| Landing page | None | Static assets and a fixed synthetic example. |
+| PWA and browser extension | None for protection | The shared TypeScript scanner runs in the browser. The PWA can scan offline. When you submit in a third-party chat, that chat selects and runs its own model. |
+| Standalone terminal CLI | None | Node.js scans text locally. The CLI has no inference step. |
+| Claude Code, Codex, Cursor, and Gemini native hooks | None for the hook | A local command scans the submitted text. The host agent manages its own model and authentication for approved turns. |
+| Codex relay | The model selected in the routed Codex client | The local gateway applies rules before forwarding supported requests to OpenAI. The relay profile does not set a model. A live relay session uses the maintainer or user’s configured upstream API key. |
+| GitHub Actions and evaluation | None | Deterministic fixtures and security scanners. The Codex 0.172.0 smoke tests name `gpt-5.4` in their test config and use local hook or mock Responses checks. They do not call that model or require a provider key. |
+| Project development | Codex session settings recorded when visible | The Evidence Pack records model and reasoning effort where available and marks missing values. Project development settings are separate from runtime protection. |
+
+[Shared scanner](packages/core/index.ts) · [Codex smoke test](tests/e2e/codex.mjs) · [Evidence Pack](evidence/README.md)
 
 ## Deploy the website to Vercel
 

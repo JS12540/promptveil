@@ -1,0 +1,55 @@
+.skip { position: absolute; top: .7rem; left: 1rem; transform: translateY(-200%); background: #102d29; padding: .65rem; z-index: 2; }
+.skip:focus { transform: none; }
+body { background: #091719; color: #e9f3ef; }
+.docs-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding: .9rem clamp(1rem, 4vw, 3rem); border-bottom: 1px solid #2b4541; background: #0d2020; }
+.docs-brand { display: flex; align-items: center; gap: .65rem; color: inherit; font-weight: 800; text-decoration: none; }
+.docs-brand img { border-radius: .5rem; }
+.docs-header nav { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.docs-header .button { padding: .4rem .75rem; }
+.docs-layout { max-width: 98rem; margin: auto; padding: 2rem clamp(1rem, 4vw, 3rem) 4rem; display: grid; grid-template-columns: 13rem minmax(0, 48rem) minmax(0, 13rem); justify-content: space-between; gap: clamp(1.25rem, 3vw, 3rem); }
+.sidebar, .outline { align-self: start; position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow: auto; }
+.sidebar h2, .mobile-nav h2 { color: #b4cfca; font-size: .9rem; margin: 0 0 .35rem; }
+.sidebar section + section, .mobile-nav section + section { margin-top: 1rem; }
+.sidebar ul, .outline ul, .mobile-nav ul { list-style: none; padding: 0; margin: 0; }
+.sidebar a, .outline a, .mobile-nav a { display: block; padding: .26rem .55rem; text-decoration: none; color: #c1d6d0; border-radius: .4rem; overflow-wrap: anywhere; }
+.sidebar a:hover, .outline a:hover, .mobile-nav a:hover { background: #13332e; }
+a[aria-current="page"] { background: #153832; color: #adf7e5; font-weight: 700; }
+.outline { border-left: 1px solid #294641; padding-left: 1rem; font-size: .9rem; }
+.outline ul { margin-top: .35rem; }
+.outline .depth-3 { margin-left: .6rem; }
+.mobile-nav { display: none; }
+main { min-width: 0; }
+main h1 { font-size: clamp(2.1rem, 5vw, 3.8rem); margin: 0 0 1.2rem; }
+main h2 { font-size: 1.65rem; margin: 2.35rem 0 .65rem; padding-top: .6rem; border-top: 1px solid #2a413d; }
+main h3 { margin-top: 1.65rem; }
+main :is(h2,h3) { scroll-margin-top: 1rem; }
+main p, main li { color: #d1e3dc; overflow-wrap: anywhere; }
+main li + li { margin-top: .4rem; }
+main .group { color: #90e8d3; font-weight: 700; margin: 0 0 .4rem; }
+main a { text-underline-offset: .2em; }
+code { color: #c4f4e3; background: #16322e; border-radius: .3rem; padding: .12rem .28rem; }
+pre, .table-wrap { overflow-x: auto; border: 1px solid #30504a; border-radius: .65rem; }
+pre { padding: 1rem; background: #102625; }
+pre code { padding: 0; background: none; }
+blockquote { margin: 1rem 0; padding: .1rem 1rem; background: #102625; border-left: 3px solid #7de8d5; }
+table { width: 100%; border-collapse: collapse; min-width: 33rem; }
+th, td { text-align: left; padding: .75rem; vertical-align: top; }
+th { background: #15312d; }
+td { border-top: 1px solid #30504a; }
+.adjacent { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-top: 2.5rem; }
+.adjacent a { border: 1px solid #30504a; padding: .7rem; border-radius: .6rem; text-decoration: none; }
+.adjacent a:nth-child(2) { text-align: right; }
+.adjacent span { display: block; color: #b4cfca; font-size: .9rem; }
+@media (max-width: 69rem) { .docs-layout { grid-template-columns: 12rem minmax(0, 1fr); } .outline { display: none; } }
+@media (max-width: 47rem) {
+  .docs-layout { display: block; padding-top: 1rem; }
+  .sidebar { display: none; }
+  .mobile-nav { display: block; border: 1px solid #30504a; border-radius: .65rem; padding: .65rem .85rem; margin: 0 0 1.4rem; }
+  .mobile-nav nav { padding-top: .7rem; }
+}
+
+.docs-search { margin: 0 0 1.5rem; border: 1px solid #30504a; border-radius: .65rem; padding: .6rem .85rem; }
+.docs-search input { width: 100%; padding: .55rem; border: 1px solid #52736b; border-radius: .4rem; background: #102625; color: inherit; font: inherit; }
+.docs-search #docs-search-status:empty, .docs-search ul:empty { display: none; }
+
+.docs-banner { display: block; width: 100%; height: auto; border: 1px solid #30504a; border-radius: .65rem; }

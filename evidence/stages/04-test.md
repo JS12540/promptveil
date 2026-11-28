@@ -39,3 +39,5 @@ Cross-language fixtures and packaged smoke checks exercised config, source, and 
 The focused security suite verified relay rejection before upstream access and packaged release policy checks verified the extension permissions and browser content security policies. [PS-018](../sessions/PS-018.md)
 
 Browser transfer and the historical synthetic PEM finding were investigated in [PS-021](../sessions/PS-021.md).
+
+The public README and its CI guide were updated and verified in [PS-022](../sessions/PS-022.md).

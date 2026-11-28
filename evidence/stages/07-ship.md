@@ -7,3 +7,5 @@ A clean source ZIP passed archive checks and a fresh-extraction build and test r
 Public release, deployment, and signed-out checks are pending. Use the [release procedure](../../docs/releasing.md) and [submission checklist](../submission-checklist.md). Link the tagged artifacts, checksums, compatibility attestations, and demo after verification.
 
 Local build produced the extension ZIP, site ZIP, and npm-installable CLI tarball. Checksums and archive integrity passed. A clean local npm prefix installed the CLI and passed the synthetic mixed-ID smoke. [PS-002](../sessions/PS-002.md)
+
+The public README and its CI guide were updated and verified in [PS-022](../sessions/PS-022.md).

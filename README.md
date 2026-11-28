@@ -1,27 +1,53 @@
 # PromptVeil
 
-PromptVeil checks prompts locally before you submit them to an AI tool. It masks supported sensitive data and, depending on the surface, redacts detected credentials or stops submission.
+**Local-first privacy protection for AI prompts.**
 
-```text
-Before     Customer ID: 12345678. Invest ₹25,000.
-Protected  Customer ID: [customer ID placeholder]. Invest ₹25,000.
-```
+Scan prompts on your device, mask supported personal information, and redact or block detected credentials before submission. Use PromptVeil as an offline web app, a Chromium extension, a terminal CLI, or a guard for supported coding agents.
 
-**Status** · v0.1 prerelease. The [compatibility matrix](docs/compatibility.md) records the exact versions and checks completed.
+[![Verify on main](https://github.com/JS12540/promptveil/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/JS12540/promptveil/actions/workflows/ci.yml)
+[![Code scanning on main](https://github.com/JS12540/promptveil/actions/workflows/codeql.yml/badge.svg?branch=main&event=push)](https://github.com/JS12540/promptveil/actions/workflows/codeql.yml)
+[![Apache 2.0 license](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
+![A teal privacy shield masks selected lines as a prompt passes through it](docs/assets/promptveil-hero.png)
+
+[Quick start](#quick-start) | [Documentation](docs/README.md) | [Compatibility](docs/compatibility.md) | [Contributing](CONTRIBUTING.md)
+
+**Project status** | v0.1 prerelease. The [compatibility matrix](docs/compatibility.md) records tested combinations and pending live checks.
+
+## Table of contents
+
+- [Quick start](#quick-start)
+- [What you can use](#what-you-can-use)
+- [Detection coverage](#detection-coverage)
+- [Models and data flow](#models-and-data-flow)
 - [Set up from a source ZIP](#set-up-from-a-source-zip)
 - [Run the website and PWA](#run-the-website-and-pwa)
-- [Install Chrome or Edge extension](#install-the-chrome-or-edge-extension)
+- [Install the Chrome or Edge extension](#install-the-chrome-or-edge-extension)
 - [Install from a browser store](#install-from-a-browser-store)
 - [Publish the extension](#publish-the-extension)
 - [Install the CLI](#install-the-cli)
-- [Detection coverage](#detection-coverage)
-- [Models and data flow](#models-and-data-flow)
 - [Set up coding-agent guards](#set-up-coding-agent-guards)
-- [CI and security](#ci-and-security)
 - [Run local verification](#run-local-verification)
+- [CI and security](#ci-and-security)
 - [Deploy the website to Vercel](#deploy-the-website-to-vercel)
 - [Repository layout and contributing](#repository-layout-and-contributing)
+
+## Quick start
+
+From a checkout or extracted source archive, use Node.js **22.18+** and npm. Run this command in the folder containing `package.json`.
+
+```sh
+npm run dev
+```
+
+Open [the local preview](http://127.0.0.1:8000/), choose **Open PromptVeil**, paste the synthetic example below, and select **Scan prompt**. The PWA scans locally without an API key.
+
+```text
+Before     Customer ID: 12345678. Invest ₹25,000.
+Protected  Customer ID: [PV_CUSTOMER_ID_...]. Invest ₹25,000.
+```
+
+For installation and deeper setup, see the [browser extension](#install-the-chrome-or-edge-extension), [CLI](#install-the-cli), and [coding-agent guards](#set-up-coding-agent-guards).
 
 ## What you can use
 
@@ -280,15 +306,28 @@ See the [testing guide](docs/testing.md) and [CI workflow](.github/workflows/ci.
 
 ## CI and security
 
-| Workflow | Checks |
-| --- | --- |
-| Verify | Typecheck, link and workflow checks, cross-platform CLI tests, synthetic agent and browser checks, evaluation, artifact checksums, and a clean packaged install. |
-| Verify / security | Privacy regressions for paste, Send, PWA worker, and the relay. Gitleaks scans repository history with redacted output, dependency review checks PR changes, and OSV-Scanner audits the full pnpm lockfile. |
-| Code scanning | CodeQL analyzes JavaScript and TypeScript, Python packaging code, and GitHub Actions. Results go to the Security tab. |
-| Runtime compatibility canary | Scheduled Node 22 and 24 runtime checks. |
-| Tagged release | Re-runs Verify, builds from a matching SemVer tag, attests the three release archives, then verifies checksums and provenance before publishing. |
+GitHub reported **12 successful checks** on Dependabot PR #1. The list includes eight Verify jobs, three CodeQL language jobs, and a separate CodeQL result published by GitHub on the PR. The check count can vary by event. Dependency review runs as a step within the **Security** job on pull requests. [PR #1 checks](https://github.com/JS12540/promptveil/pull/1/checks)
 
-Dependabot proposes updates to package dependencies and SHA-pinned Actions. Generated release notes group changes by PR label. GitHub repository rules, required code scanning, and private vulnerability reporting are configured in repository settings. [Security policy](SECURITY.md) · [Release and repository setup](docs/releasing.md)
+| # | Check | What it verifies and why it matters |
+| --- | --- | --- |
+| 1 | Quality | Installs pinned dependencies from the frozen lockfile, type-checks the project, checks relative Markdown links and whitespace, and validates workflows with actionlint. Catches broken builds, links, and CI configuration before merge. |
+| 2 | Unit and CLI (Ubuntu) | Runs the shared scanner and CLI suites on Linux. Checks detection, masking, blocking, and the CLI exit codes used by scripts. |
+| 3 | Unit and CLI (macOS) | Runs the same suite on macOS. Catches path, shell, and process behavior that can vary on Apple systems. |
+| 4 | Unit and CLI (Windows) | Runs the same suite on Windows with configured platform skips. Checks supported CLI behavior with Windows paths and subprocesses. |
+| 5 | Agent integration | Runs the full unit suite plus native Codex hook and loopback relay smoke tests with a pinned Codex CLI and synthetic inputs. Catches protocol mismatches and forwarding failures at the agent boundary. |
+| 6 | Browser end-to-end | Tests the packaged extension and PWA in Chromium with Playwright. Exercises editor insertion, protected paste and Send, clipboard handling, and offline reload. Catches failures that DOM mocks can miss. |
+| 7 | Evaluation and packaging | Runs the 650-case synthetic evaluation, verifies release packages and checksums, and installs and runs the packaged CLI. Checks detection behavior on the fixture corpus and the usability of downloadable artifacts. |
+| 8 | Security | Runs privacy regression tests, scans Git history with redacted Gitleaks output, reviews dependency changes on PRs, and checks the full pnpm lockfile with OSV-Scanner. Covers privacy regressions, accidental credential commits, and known dependency vulnerabilities. |
+| 9 | CodeQL (GitHub Actions) | Analyzes workflow files for patterns such as unsafe use of pull request input in shell commands. Helps protect CI runners and repository permissions. |
+| 10 | CodeQL (JavaScript and TypeScript) | Analyzes source and script data flows for security issues, including paths that runtime tests may never execute. |
+| 11 | CodeQL (Python) | Analyzes Python release tooling for potentially unsafe code paths that could affect package generation. |
+| 12 | CodeQL result | GitHub reports the uploaded code-scanning outcome on the PR. Reviewers can see the scan status and any flagged findings before merging. |
+
+GitHub's **Dependency graph** must be enabled for PR dependency review to work. If the job reports that dependency review is unsupported, enable the graph in repository security settings and rerun the failed job. [Verify workflow](.github/workflows/ci.yml) | [CodeQL workflow](.github/workflows/codeql.yml) | [Repository setup](docs/releasing.md)
+
+**Dependabot** proposes updates to development dependencies and SHA-pinned GitHub Actions. Review the diff and upstream release notes, bring the PR up to date with `main` when needed, and merge after fresh checks pass. Review major TypeScript and Node.js type changes against the repository's pinned CI runtime. [Dependabot configuration](.github/dependabot.yml)
+
+The scheduled compatibility canary tests Node 22 and 24. The manually dispatched release workflow reruns Verify and checks release archives, checksums, and provenance. [Compatibility workflow](.github/workflows/compatibility.yml) | [Release workflow](.github/workflows/release.yml) | [Security policy](SECURITY.md)
 
 ## Deploy the website to Vercel
 

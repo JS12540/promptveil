@@ -1,0 +1,2 @@
+# Historical synthetic PEM marker surrounding synthetic-pem-body in the redaction test.
+57d2dc7d27150426233cb6eada39c4d7d84c1983:tests/core.test.ts:private-key:82

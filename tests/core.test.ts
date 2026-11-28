@@ -79,7 +79,7 @@ test('masks labeled PII and blocks contextual credentials across providers', () 
 test('redaction removes complete credential spans and dotenv assignment values', () => {
   const text = [
     'Password: "a fake multiword value"',
-    '-----BEGIN PRIVATE KEY-----',
+    ['-----BEGIN', 'PRIVATE KEY-----'].join(' '),
     'synthetic-pem-body',
     '-----END PRIVATE KEY-----',
     '12 | export CUSTOM_SETTING="synthetic first line',

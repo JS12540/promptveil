@@ -13,3 +13,5 @@ Bundled guard and launcher from one entry point and added fallback recovery and 
 User evidence confirmed live submission of an unmasked synthetic draft. G4 now exposes build identity and event matching to diagnose the failure. [Audit](../audit/chrome-live-bypass.md) · [PS-013](../sessions/PS-013.md)
 
 Live G4 testing identified two customer ID label typos that escaped masking. G5 recognizes both, adds typing feedback, and moves diagnostics into a separate tab. [Audit](../audit/chrome-typing-diagnostics.md) · [PS-014](../sessions/PS-014.md)
+
+Browser transfer and the historical synthetic PEM finding were investigated in [PS-021](../sessions/PS-021.md).

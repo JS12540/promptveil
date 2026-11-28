@@ -54,9 +54,10 @@ async function verifyEditorTransfer(context, protectedText) {
   try {
     await editor.route(fixtureUrl, route => route.fulfill({
       contentType: 'text/html',
-      body: '<form><textarea aria-label="Text composer"></textarea><div contenteditable="true" role="textbox" aria-label="Rich composer"><p></p></div><button>Send</button></form>',
+      body: '<form><textarea aria-label="Text composer"></textarea><div contenteditable="true" role="textbox" aria-label="Rich composer"><p><br></p></div><button>Send</button></form>',
     }));
     await editor.goto(fixtureUrl);
+    await editor.bringToFront();
     await editor.evaluate(() => {
       document.querySelector('form').addEventListener('submit', event => {
         event.preventDefault();
@@ -65,13 +66,13 @@ async function verifyEditorTransfer(context, protectedText) {
     });
     for (const label of ['Text composer', 'Rich composer']) {
       const field = editor.getByRole('textbox', { name: label });
-      await field.focus();
+      await field.click();
       const transfer = expectedUrl => editor.evaluate(
         ({ source, message, expectedUrl }) => globalThis.eval('(' + source + ')')(message, expectedUrl),
         { source: insertIntoFocusedEditor.toString(), message: protectedText, expectedUrl },
       );
       assert.equal(await transfer(fixtureUrl + '/changed'), false);
-      assert.equal(await transfer(fixtureUrl), true);
+      assert.equal(await transfer(fixtureUrl), true, label);
       const value = await field.evaluate(element => element instanceof HTMLTextAreaElement ? element.value : element.textContent);
       assert.equal(value, protectedText);
       assert.doesNotMatch(value, new RegExp(marker));

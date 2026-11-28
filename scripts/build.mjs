@@ -76,7 +76,7 @@ await put(join(web, 'app/index.html'), html('PromptVeil · Private composer',
   composer.replace('Scan locally, then copy or transfer the protected text.', 'Mask detected values locally, then copy the protected text.')
     .replace('</header>', '<button id="install" hidden>Install PromptVeil</button><button id="update" hidden>Apply update and clear session</button></header>')
     .replace(/<label class="check">.*?<\/label>/, '<input id="strict" type="checkbox" hidden><label class="check"><input id="config-values" type="checkbox"> Mask all config values, including unknown fields</label>')
-  + '<script type="module" src="../apps/web/app/index.js"></script>'));
+  + '<script type="module" src="./apps/web/app/index.js"></script>'));
 await cp('packages/ui/style.css', join(web, 'assets/style.css'));
 await cp('apps/web/landing.css', join(web, 'assets/landing.css'));
 await put(join(web, 'app/manifest.webmanifest'), JSON.stringify({
@@ -86,7 +86,8 @@ await put(join(web, 'app/manifest.webmanifest'), JSON.stringify({
 }, null, 2));
 
 const modules = ['packages/core/index.ts', 'packages/ui/composer.ts', 'packages/ui/worker.ts'];
-await compile(web, [...modules, 'apps/web/app/index.ts']);
+// Keep the worker and its module imports inside the PWA service worker scope.
+await compile(join(web, 'app'), [...modules, 'apps/web/app/index.ts']);
 
 const docs = await readFile('docs/install.md', 'utf8');
 const installText = renderInstallGuide(docs, repository ? sourceLink : '');

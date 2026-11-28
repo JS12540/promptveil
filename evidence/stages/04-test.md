@@ -37,3 +37,5 @@ Packaged worker and CLI smoke checks and a mock upstream confirmed that .env val
 Cross-language fixtures and packaged smoke checks exercised config, source, and structured environment redaction. [Audit](../audit/cross-language-redaction.md) · [PS-017](../sessions/PS-017.md)
 
 The focused security suite verified relay rejection before upstream access and packaged release policy checks verified the extension permissions and browser content security policies. [PS-018](../sessions/PS-018.md)
+
+Browser transfer and the historical synthetic PEM finding were investigated in [PS-021](../sessions/PS-021.md).

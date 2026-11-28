@@ -19,3 +19,5 @@ The table lists capabilities in the prerelease and the checks used to establish 
 Document browser and OS versions, provider URL, auth mode, and insertion versus copy on each run. Coverage applies to the tested workflow and configuration.
 
 Live ChatGPT testing of G4 confirmed that standard customer ID labels were masked and two misspelled labels escaped. The G5 regression tests cover both spellings, and the diagnostics tab exposes typing scans and canceled gestures. Live G5 verification is pending. [G5 audit](../evidence/audit/chrome-typing-diagnostics.md)
+
+The packaged PWA caches its scan worker and module dependencies within the composer service worker scope for offline reloads.

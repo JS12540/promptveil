@@ -49,5 +49,5 @@ for (const { src } of web.icons) assert.ok((await stat(`dist/web/app/${src}`)).i
 assert.match(await readFile('dist/web/app/sw.js', 'utf8'), /promptveil-[a-f0-9]{16}/);
 const webApp = await readFile('dist/web/app/index.html', 'utf8');
 assert.match(webApp, /<meta http-equiv="Content-Security-Policy" content="default-src 'self'; object-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'">/);
-assert.doesNotMatch(webApp, /<script(?![^>]*\ssrc="\.\.\/)[^>]*>/i);
+assert.doesNotMatch(webApp, /<script(?![^>]*\ssrc="\.\/apps\/web\/app\/index\.js")[^>]*>/i);
 for (const name of ['LICENSE', 'NOTICE', 'README.md']) assert.ok((await stat(`dist/cli/package/${name}`)).isFile());
